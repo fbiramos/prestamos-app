@@ -187,10 +187,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cancelEditBtn.addEventListener('click', resetForm);
 
-    // --- SERVICE WORKER ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then(reg => console.log('Service Worker registrado.'), err => console.log('Error registro SW: ', err));
-        });
-    }
-});
+    });
+
+// --- SERVICE WORKER ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(reg => console.log('Service Worker registrado.'), err => console.log('Error registro SW: ', err));
+    });
+}

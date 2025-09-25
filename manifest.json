@@ -2,7 +2,7 @@
   "name": "Control de Préstamos",
   "short_name": "Préstamos",
   "description": "Una aplicación para gestionar préstamos personales.",
-  "start_url": "/index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0275d8",
