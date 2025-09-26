@@ -39,7 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="font-bold text-lg">${loan.client}</p>
-                        <p class="text-gray-800">Monto: <span class="font-semibold">$${amount.toFixed(2)}</span></p>
+                        <p class="text-gray-800">Monto: <span class="font-semibold">${amount.toFixed(2)}</span></p>
+                        <p class="text-gray-800">Fecha: <span class="font-semibold">${loan.loanDate}</span></p>
                         ${loan.details ? `<p class="text-sm text-gray-600 mt-1">Detalles: ${loan.details}</p>` : ''}
                     </div>
                     <div class="flex space-x-2">
@@ -120,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const loanId = loanIdInput.value;
         const client = document.getElementById('client-name').value;
         const amount = document.getElementById('loan-amount').value;
+        const loanDate = document.getElementById('loan-date').value; // Get the new date value
         const details = document.getElementById('loan-details').value;
         const receiptFile = document.getElementById('loan-receipt').files[0];
 
@@ -136,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 receiptURL = await fileRef.getDownloadURL();
             }
 
-            const loanData = { client, amount, details, receiptURL };
+            const loanData = { client, amount, loanDate, details, receiptURL }; // Include loanDate
 
             if (loanId) { // Actualizar
                 await db.collection('loans').doc(loanId).update(loanData);
@@ -165,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loanIdInput.value = loanToEdit.id;
                 document.getElementById('client-name').value = loanToEdit.client;
                 document.getElementById('loan-amount').value = loanToEdit.amount;
+                document.getElementById('loan-date').value = loanToEdit.loanDate; // Populate date field
                 document.getElementById('loan-details').value = loanToEdit.details || '';
                 
                 saveBtn.textContent = 'Actualizar Préstamo';
@@ -181,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetForm = () => {
         loanForm.reset();
         loanIdInput.value = '';
+        document.getElementById('loan-date').value = ''; // Clear the date field
         saveBtn.textContent = 'Guardar Préstamo';
         cancelEditBtn.classList.add('hidden');
     };
