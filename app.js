@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button data-id="${loan.id}" class="remove-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">PAGADO</button>
                     </div>
                 </div>
-                ${loan.receiptURL ? `<div class="mt-2"><a href="${loan.receiptURL}" target="_blank" class="text-blue-500 hover:underline text-sm">Ver Comprobante</a></div>` : ''}
+                ${loan.receiptURL ? `<div class="mt-2"><a href="${loan.receiptURL}" target="_blank" class="text-red-500 hover:underline text-sm">Ver Comprobante</a></div>` : ''}
             `;
             loansList.appendChild(loanElement);
         });

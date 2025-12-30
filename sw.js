@@ -1,4 +1,4 @@
-const CACHE_NAME = 'prestamos-cache-v1';
+const CACHE_NAME = 'prestamos-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -18,15 +18,24 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-  );
+  // Estrategia: Network First para navegaciones (index.html)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          // Si falla la red, buscamos en la caché
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // Estrategia: Cache First para otros recursos (CSS, JS, imágenes)
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          return response || fetch(event.request);
+        })
+    );
+  }
 });
 
 self.addEventListener('activate', event => {
