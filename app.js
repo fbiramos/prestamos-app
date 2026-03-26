@@ -1,14 +1,14 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     const firebaseConfig = {
-        apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ",
+        apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", // <-- ¡Reemplaza con tu API Key real!
         authDomain: "prestamos-app-dfddb.firebaseapp.com",
         projectId: "prestamos-app-dfddb",
-        storageBucket: "prestamos-app-dfddb.appspot.com", // Corregido para Storage
+        storageBucket: "prestamos-app-dfddb.appspot.com",
         messagingSenderId: "492698713145",
         appId: "1:492698713145:web:38f380e443601a817761e8"
     };
-
+    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const storage = firebase.storage();
@@ -34,6 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Estado de la app
     let allLoans = [];
 
+    // --- NOTIFICACIONES ---
+    const showToast = (message, isError = false) => {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = `fixed bottom-4 right-4 text-white px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+        toast.classList.remove('hidden', 'translate-y-20');
+        setTimeout(() => {
+            toast.classList.add('translate-y-20');
+            setTimeout(() => toast.classList.add('hidden'), 300);
+        }, 3000);
+    };
+
     // --- RENDERIZADO ---
     const renderLoans = (loans) => {
         loansList.innerHTML = '';
@@ -43,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         // Calcular Total
-        const total = filteredLoans.reduce((acc, loan) => acc + parseFloat(loan.amount || 0), 0);
+        const total = filteredLoans.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
         totalAmountDisplay.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total);
 
         if (filteredLoans.length === 0) {
@@ -197,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('loans').add(loanData);
             }
 
-            resetForm();
+            showToast(loanId ? "Préstamo actualizado" : "Préstamo guardado correctamente");
         } catch (error) {
             console.error("Error guardando el préstamo: ", error);
             alert("Hubo un error al guardar. Inténtalo de nuevo.");
@@ -238,7 +250,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Borramos el registro de la base de datos
-                db.collection('loans').doc(loanId).delete().catch(error => console.error("Error borrando el registro: ", error));
+                db.collection('loans').doc(loanId).delete()
+                    .then(() => showToast("Préstamo marcado como pagado"))
+                    .catch(error => console.error("Error borrando el registro: ", error));
             }
         }
     });
@@ -246,13 +260,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetForm = () => {
         loanForm.reset();
         loanIdInput.value = '';
-        document.getElementById('loan-date').value = ''; 
+        // Establecer la fecha de hoy por defecto tras limpiar
+        document.getElementById('loan-date').value = new Date().toISOString().split('T')[0];
         loanReceiptInput.value = ''; // Limpiar el input de archivo físicamente
         saveBtn.textContent = 'Guardar Préstamo';
         cancelEditBtn.classList.add('hidden');
     };
 
     cancelEditBtn.addEventListener('click', resetForm);
+
+    // Establecer fecha de hoy al cargar la app por primera vez
+    document.getElementById('loan-date').value = new Date().toISOString().split('T')[0];
 
     });
 
