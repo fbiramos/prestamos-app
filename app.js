@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredLoans.forEach(loan => {
             const amount = parseFloat(loan.amount);
             const loanElement = document.createElement('div');
-            loanElement.className = 'p-4 border rounded-lg shadow-sm bg-white';
+            loanElement.className = 'p-4 border rounded-lg shadow-sm bg-slate-50';
             loanElement.innerHTML = `
                 <div class="flex justify-between items-start">
                     <div>
