@@ -13,12 +13,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = firebase.firestore();
     const storage = firebase.storage();
 
+    // Habilitar Persistencia Offline
+    db.enablePersistence().catch((err) => {
+        if (err.code == 'failed-precondition') {
+            console.warn('Persistencia falló: múltiples pestañas abiertas');
+        } else if (err.code == 'unimplemented') {
+            console.warn('El navegador no soporta persistencia');
+        }
+    });
+
     // Elementos del DOM
     const loanForm = document.getElementById('loan-form');
     const loansList = document.getElementById('loans-list');
     const loanIdInput = document.getElementById('loan-id');
     const saveBtn = document.getElementById('save-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const totalAmountDisplay = document.getElementById('total-amount');
+    const searchInput = document.getElementById('search-input');
 
     // Estado de la app
     let allLoans = [];
@@ -26,12 +37,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- RENDERIZADO ---
     const renderLoans = (loans) => {
         loansList.innerHTML = '';
-        if (loans.length === 0) {
+        const searchTerm = searchInput.value.toLowerCase();
+        const filteredLoans = loans.filter(loan => 
+            loan.client.toLowerCase().includes(searchTerm)
+        );
+
+        // Calcular Total
+        const total = filteredLoans.reduce((acc, loan) => acc + parseFloat(loan.amount || 0), 0);
+        totalAmountDisplay.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total);
+
+        if (filteredLoans.length === 0) {
             loansList.innerHTML = '<p class="text-gray-500">No hay préstamos registrados.</p>';
             return;
         }
 
-        loans.forEach(loan => {
+        filteredLoans.forEach(loan => {
             const amount = parseFloat(loan.amount);
             const loanElement = document.createElement('div');
             loanElement.className = 'p-4 border rounded-lg shadow-sm bg-white';
@@ -39,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="font-bold text-lg">${loan.client}</p>
-                        <p class="text-gray-800">Monto: <span class="font-semibold">${amount.toFixed(2)}</span></p>
+                        <p class="text-gray-800">Monto: <span class="font-semibold text-blue-600">${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount)}</span></p>
                         <p class="text-gray-800">Fecha: <span class="font-semibold">${loan.loanDate}</span></p>
                         ${loan.details ? `<p class="text-sm text-gray-600 mt-1">Detalles: ${loan.details}</p>` : ''}
                     </div>
@@ -54,11 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // --- LÓGICA DE FIRESTORE ---
-    db.collection('loans').orderBy('client').onSnapshot(snapshot => {
-        allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-        renderLoans(allLoans);
-    });
+    // Evento de búsqueda
+    searchInput.addEventListener('input', () => renderLoans(allLoans));
+
+    // --- LÓGICA DE FIRESTORE CON MANEJO DE ERRORES ---
+    db.collection('loans').orderBy('client').onSnapshot(
+        snapshot => {
+            allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+            renderLoans(allLoans);
+        },
+        error => {
+            console.error("Error en tiempo real de Firestore: ", error);
+            loansList.innerHTML = '<p class="text-red-500 text-center p-4">Error al conectar con la base de datos. Verifica tu conexión.</p>';
+        }
+    );
 
     // --- LÓGICA DE LA CÁMARA ---
     const startCameraBtn = document.getElementById('start-camera-btn');
@@ -72,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startCameraBtn.addEventListener('click', async () => {
         cameraContainer.classList.remove('hidden');
+        startCameraBtn.textContent = 'Iniciando...';
         try {
             stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             video.srcObject = stream;
@@ -81,14 +111,35 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("No se pudo acceder a la cámara. Asegúrate de dar permiso.");
             cameraContainer.classList.add('hidden');
         }
+        startCameraBtn.textContent = 'Tomar Foto';
     });
 
     captureBtn.addEventListener('click', () => {
         const context = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
+        // Redimensionar para ahorrar espacio (máximo 1024px)
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
+        let width = video.videoWidth;
+        let height = video.videoHeight;
+
+        if (width > height) {
+            if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            }
+        } else {
+            if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+            }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        context.drawImage(video, 0, 0, width, height);
+        
+        // Bajamos la calidad a 0.7 (70%) para reducir drásticamente el peso del archivo
         canvas.toBlob(blob => {
             const file = new File([blob], `captura_${Date.now()}.jpg`, { type: 'image/jpeg' });
             
@@ -120,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const loanId = loanIdInput.value;
         const client = document.getElementById('client-name').value;
-        const amount = document.getElementById('loan-amount').value;
+        const amount = parseFloat(document.getElementById('loan-amount').value);
         const loanDate = document.getElementById('loan-date').value; // Get the new date value
         const details = document.getElementById('loan-details').value;
         const receiptFile = document.getElementById('loan-receipt').files[0];
@@ -176,7 +227,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else if (e.target.classList.contains('remove-btn')) {
             if (confirm('¿Seguro que quieres marcar este préstamo como pagado?')) {
-                db.collection('loans').doc(loanId).delete().catch(error => console.error("Error borrando: ", error));
+                const loanToDelete = allLoans.find(loan => loan.id === loanId);
+
+                // Si el préstamo tiene una imagen, la borramos de Storage
+                if (loanToDelete && loanToDelete.receiptURL) {
+                    const imageRef = storage.refFromURL(loanToDelete.receiptURL);
+                    imageRef.delete().catch(error => {
+                        console.error("Error al eliminar el archivo físico:", error);
+                    });
+                }
+
+                // Borramos el registro de la base de datos
+                db.collection('loans').doc(loanId).delete().catch(error => console.error("Error borrando el registro: ", error));
             }
         }
     });
@@ -184,7 +246,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetForm = () => {
         loanForm.reset();
         loanIdInput.value = '';
-        document.getElementById('loan-date').value = ''; // Clear the date field
+        document.getElementById('loan-date').value = ''; 
+        loanReceiptInput.value = ''; // Limpiar el input de archivo físicamente
         saveBtn.textContent = 'Guardar Préstamo';
         cancelEditBtn.classList.add('hidden');
     };
@@ -196,6 +259,28 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- SERVICE WORKER ---
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => console.log('Service Worker registrado.'), err => console.log('Error registro SW: ', err));
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+            console.log('Service Worker registrado.');
+            
+            // Detectar si hay una actualización esperando
+            reg.onupdatefound = () => {
+                const installingWorker = reg.installing;
+                installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // Nueva versión lista, el Service Worker se activará automáticamente por skipWaiting()
+                        console.log('Nueva versión detectada, recargando...');
+                    }
+                };
+            };
+        }).catch(err => console.log('Error registro SW: ', err));
+    });
+
+    // Recargar la página automáticamente cuando el nuevo Service Worker tome el control
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+            window.location.reload();
+            refreshing = true;
+        }
     });
 }
