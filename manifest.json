@@ -1,6 +1,6 @@
 {
-  "name": "Control de Préstamos",
-  "short_name": "Préstamos",
+  "name": "RZBROS money - Control de Préstamos",
+  "short_name": "RZBROS money",
   "description": "Una aplicación para gestionar préstamos personales.",
   "start_url": "/",
   "display": "standalone",

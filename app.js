@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loanToEdit) {
                 loanIdInput.value = loanToEdit.id;
                 document.getElementById('client-name').value = loanToEdit.client;
-                document.getElementById('loan-amount').value = loanToEdit.amount;
+                document.getElementById('loan-amount').value = parseFloat(loanToEdit.amount);
                 document.getElementById('loan-date').value = loanToEdit.loanDate; // Populate date field
                 document.getElementById('loan-details').value = loanToEdit.details || '';
                 
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Establecer fecha de hoy al cargar la app por primera vez
     document.getElementById('loan-date').value = new Date().toISOString().split('T')[0];
 
-    });
+});
 
 // --- SERVICE WORKER ---
 if ('serviceWorker' in navigator) {
