@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveBtn = document.getElementById('save-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
     const totalAmountDisplay = document.getElementById('total-amount');
-    const searchInput = document.getElementById('search-input');
     const exportPdfBtn = document.getElementById('export-pdf-btn');
     
     // Elementos de Login
@@ -146,10 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- RENDERIZADO ---
     const renderLoans = (loans) => {
         loansList.innerHTML = '';
-        const searchTerm = searchInput.value.toLowerCase();
-        const filteredLoans = loans.filter(loan => 
-            loan.client.toLowerCase().includes(searchTerm)
-        );
+        const filteredLoans = loans;
 
         // Calcular Total
         const total = filteredLoans.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
@@ -182,9 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loansList.appendChild(loanElement);
         });
     };
-
-    // Evento de búsqueda
-    searchInput.addEventListener('input', () => renderLoans(allLoans));
 
     const initFirestoreListener = () => {
         if (unsubscribe) unsubscribe();
@@ -377,10 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        const searchTerm = searchInput.value.toLowerCase();
-        const filteredLoans = allLoans.filter(loan => 
-            loan.client.toLowerCase().includes(searchTerm)
-        );
+        const filteredLoans = allLoans;
 
         if (filteredLoans.length === 0) {
             showToast("No hay datos para exportar", true);
