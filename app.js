@@ -181,7 +181,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const initFirestoreListener = () => {
-        console.log("Iniciando conexión estándar para:", currentUser);
+        if (!currentUser) {
+            console.warn("No se puede iniciar el listener: No hay usuario definido.");
+            return;
+        }
+        console.log("Intentando conexión v30 para usuario:", currentUser);
         if (unsubscribe) unsubscribe();
         
         // Mostrar un estado de carga más específico
@@ -196,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .where('owner', '==', currentUser)
             .onSnapshot(
                 snapshot => {
-                    console.log("¡Conexión exitosa! Documentos recibidos:", snapshot.size);
+                    console.log("Conexión v30 exitosa. Documentos encontrados:", snapshot.size);
                     allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     renderLoans(allLoans);
                 },
