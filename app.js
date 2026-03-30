@@ -181,14 +181,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const initFirestoreListener = () => {
-        console.log("Iniciando conexión con Firestore para:", currentUser);
+        console.log("Intentando conectar a Firestore. Usuario actual:", currentUser);
         if (unsubscribe) unsubscribe();
         
         // Mostrar un estado de carga más específico
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Sincronizando con la nube...</span>
+                <span>Conectando con RZBRO$ Cloud...</span>
             </div>`;
 
         // Filtramos solo los préstamos del usuario actual
@@ -196,12 +196,12 @@ document.addEventListener('DOMContentLoaded', () => {
             .where('owner', '==', currentUser)
             .onSnapshot(
                 snapshot => {
-                    console.log("Datos recibidos de Firestore");
+                    console.log("¡Conexión exitosa! Documentos recibidos:", snapshot.size);
                     allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     renderLoans(allLoans);
                 },
                 error => {
-                    console.error("Error Firestore: ", error);
+                    console.error("DETALLE DEL ERROR DE PERMISOS:", error.code, error.message);
                     loansList.innerHTML = `
                         <div class="p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm">
                             <p class="font-bold">Error de conexión:</p>
