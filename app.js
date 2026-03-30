@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const initFirestoreListener = () => {
-        console.log("Intentando conectar a Firestore. Usuario actual:", currentUser);
+        console.log("Iniciando conexión estándar para:", currentUser);
         if (unsubscribe) unsubscribe();
         
         // Mostrar un estado de carga más específico
