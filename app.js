@@ -382,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
         doc.text("Reporte de Préstamos - RZBRO$", 14, 15);
         doc.setFontSize(10);
         doc.text(`Fecha del reporte: ${new Date().toLocaleDateString()}`, 14, 22);
+        doc.text(`Generado por: ${currentUser}`, 14, 27);
 
         const tableData = filteredLoans.map(loan => [
             loan.client,
@@ -394,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formattedTotal = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total);
 
         doc.autoTable({
-            startY: 30,
+            startY: 35,
             head: [['Cliente', 'Monto', 'Fecha', 'Detalles']],
             body: tableData,
             foot: [['', `TOTAL: ${formattedTotal}`, '', '']],
