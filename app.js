@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando con RZBRO$ Cloud...</span>
+                <span>Conectando v32...</span>
             </div>`;
 
         // Filtramos solo los préstamos del usuario actual
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .where('owner', '==', currentUser)
             .onSnapshot(
                 snapshot => {
-                        console.log("Conexión v31 exitosa. Documentos:", snapshot.size);
+                    console.log("Conexión v32 exitosa. Documentos:", snapshot.size);
                     allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     renderLoans(allLoans);
                 },
@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Agregamos el campo 'owner' para saber de quién es el préstamo
-            const loanData = { client, amount, loanDate, details, receiptURL, owner: currentUser };
+            const loanData = { client, amount, interest, loanDate, details, receiptURL, owner: currentUser };
 
             if (loanId) { // Actualizar
                 await db.collection('loans').doc(loanId).update(loanData);
