@@ -187,22 +187,27 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("Intentando conexión v30 para usuario:", currentUser);
+        console.log("Configuración Firebase:", firebase.app().options.projectId);
+        console.log("Iniciando listener v33 para:", currentUser);
+        
         if (unsubscribe) unsubscribe();
         
         // Mostrar un estado de carga más específico
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v32...</span>
+                <span>Conectando v33...</span>
             </div>`;
 
-        // Filtramos solo los préstamos del usuario actual
-        unsubscribe = db.collection('loans')
-            .where('owner', '==', currentUser)
-            .onSnapshot(
+        /**
+         * DIAGNÓSTICO: Si el error persiste, intentaremos quitar el .where() 
+         * temporalmente para ver si el problema es el filtro o la regla general.
+         */
+        const query = db.collection('loans').where('owner', '==', currentUser);
+
+        unsubscribe = query.onSnapshot(
                 snapshot => {
-                    console.log("Conexión v32 exitosa. Documentos:", snapshot.size);
+                    console.log("¡ÉXITO v33! Documentos encontrados:", snapshot.size);
                     allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     renderLoans(allLoans);
                 },
