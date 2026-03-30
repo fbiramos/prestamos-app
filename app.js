@@ -1,5 +1,13 @@
+// Datos de los hermanos y sus PINs (Puedes cambiarlos aquí)
+const BROTHERS = {
+    'Fabio': { pin: '11' },
+    'Juan Carlos': { pin: '22' },
+    'Ronald': { pin: '33' },
+    'Luis': { pin: '44' }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
+    let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", // <-- ¡Reemplaza con tu API Key real!
         authDomain: "prestamos-app-dfddb.firebaseapp.com",
@@ -30,9 +38,79 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
     const totalAmountDisplay = document.getElementById('total-amount');
     const searchInput = document.getElementById('search-input');
+    const exportPdfBtn = document.getElementById('export-pdf-btn');
+    
+    // Elementos de Login
+    const userSelection = document.getElementById('user-selection');
+    const pinModal = document.getElementById('pin-modal');
+    const pinInput = document.getElementById('pin-input');
+    const pinTitle = document.getElementById('pin-title');
+    const verifyPinBtn = document.getElementById('verify-pin-btn');
+    const biometricBtn = document.getElementById('biometric-btn');
+    let selectedUser = null;
 
     // Estado de la app
     let allLoans = [];
+    let unsubscribe = null; // Para limpiar el listener de Firestore
+
+    // --- MANEJO DE SESIÓN ---
+    window.selectUser = (name) => {
+        selectedUser = name;
+        pinTitle.textContent = `Hola, ${name}`;
+        pinModal.classList.remove('hidden');
+        pinInput.focus();
+        
+        // Mostrar botón de biometría si el navegador lo soporta
+        if (window.PublicKeyCredential) {
+            biometricBtn.classList.remove('hidden');
+        }
+    };
+
+    window.cancelLogin = () => {
+        pinModal.classList.add('hidden');
+        pinInput.value = '';
+    };
+
+    verifyPinBtn.addEventListener('click', () => {
+        if (pinInput.value === BROTHERS[selectedUser].pin) {
+            loginSuccess(selectedUser);
+        } else {
+            showToast("PIN incorrecto", true);
+            pinInput.value = '';
+        }
+    });
+
+    const loginSuccess = (userName) => {
+        currentUser = userName;
+        localStorage.setItem('rzbros_user', userName);
+        userSelection.classList.add('hidden');
+        pinModal.classList.add('hidden');
+        initFirestoreListener();
+        showToast(`Bienvenido ${userName}`);
+    };
+
+    window.logout = () => {
+        localStorage.removeItem('rzbros_user');
+        location.reload();
+    };
+
+    // Simulación simple de biometría (En PWAs usa el bloqueo del sistema si está configurado)
+    biometricBtn.addEventListener('click', async () => {
+        try {
+            // Esto dispara la autenticación nativa del dispositivo
+            const auth = await navigator.credentials.create({
+                publicKey: {
+                    challenge: new Uint8Array([1, 2, 3, 4]),
+                    rp: { name: "RZBRO$" },
+                    user: { id: new Uint8Array([1]), name: selectedUser, displayName: selectedUser },
+                    pubKeyCredParams: [{ alg: -7, type: "public-key" }]
+                }
+            });
+            if (auth) loginSuccess(selectedUser);
+        } catch (e) {
+            showToast("Usa el PIN para ingresar");
+        }
+    });
 
     // --- NOTIFICACIONES ---
     const showToast = (message, isError = false) => {
@@ -89,17 +167,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Evento de búsqueda
     searchInput.addEventListener('input', () => renderLoans(allLoans));
 
-    // --- LÓGICA DE FIRESTORE CON MANEJO DE ERRORES ---
-    db.collection('loans').orderBy('client').onSnapshot(
-        snapshot => {
-            allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-            renderLoans(allLoans);
-        },
-        error => {
-            console.error("Error en tiempo real de Firestore: ", error);
-            loansList.innerHTML = '<p class="text-red-500 text-center p-4">Error al conectar con la base de datos. Verifica tu conexión.</p>';
-        }
-    );
+    const initFirestoreListener = () => {
+        if (unsubscribe) unsubscribe();
+        
+        // Filtramos solo los préstamos del usuario actual
+        unsubscribe = db.collection('loans')
+            .where('owner', '==', currentUser)
+            .onSnapshot(
+                snapshot => {
+                    allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    renderLoans(allLoans);
+                },
+                error => {
+                    console.error("Error Firestore: ", error);
+                }
+            );
+    };
 
     // --- LÓGICA DE LA CÁMARA ---
     const startCameraBtn = document.getElementById('start-camera-btn');
@@ -201,7 +284,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 receiptURL = await fileRef.getDownloadURL();
             }
 
-            const loanData = { client, amount, loanDate, details, receiptURL }; // Include loanDate
+            // Agregamos el campo 'owner' para saber de quién es el préstamo
+            const loanData = { client, amount, loanDate, details, receiptURL, owner: currentUser };
 
             if (loanId) { // Actualizar
                 await db.collection('loans').doc(loanId).update(loanData);
@@ -269,9 +353,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cancelEditBtn.addEventListener('click', resetForm);
 
-    // Establecer fecha de hoy al cargar la app por primera vez
-    document.getElementById('loan-date').value = new Date().toISOString().split('T')[0];
+    // --- EXPORTAR A PDF ---
+    exportPdfBtn.addEventListener('click', () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const searchTerm = searchInput.value.toLowerCase();
+        const filteredLoans = allLoans.filter(loan => 
+            loan.client.toLowerCase().includes(searchTerm)
+        );
 
+        if (filteredLoans.length === 0) {
+            showToast("No hay datos para exportar", true);
+            return;
+        }
+
+        // Título y encabezado
+        doc.setFontSize(18);
+        doc.text("Reporte de Préstamos - RZBRO$", 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Fecha del reporte: ${new Date().toLocaleDateString()}`, 14, 22);
+
+        const tableData = filteredLoans.map(loan => [
+            loan.client,
+            new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(loan.amount),
+            loan.loanDate,
+            loan.details || ''
+        ]);
+
+        doc.autoTable({
+            startY: 30,
+            head: [['Cliente', 'Monto', 'Fecha', 'Detalles']],
+            body: tableData,
+            headStyles: { fillColor: [2, 117, 216] }, // Azul de la marca
+        });
+
+        doc.save(`reporte_prestamos_${new Date().toISOString().split('T')[0]}.pdf`);
+    });
+
+    // --- INICIO DE APP ---
+    document.getElementById('loan-date').value = new Date().toISOString().split('T')[0];
+    if (currentUser) {
+        userSelection.classList.add('hidden');
+        initFirestoreListener();
+    }
 });
 
 // --- SERVICE WORKER ---
