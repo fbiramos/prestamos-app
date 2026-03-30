@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         totalAmountDisplay.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total);
 
         if (filteredLoans.length === 0) {
-            loansList.innerHTML = '<p class="text-gray-500">No hay préstamos registrados.</p>';
+            loansList.innerHTML = '<div class="text-center py-10 text-slate-500 font-bold uppercase tracking-widest text-sm">NO DEBES NI TE DEBEN</div>';
             return;
         }
 
