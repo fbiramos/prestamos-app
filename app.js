@@ -1,9 +1,9 @@
-// Datos de los hermanos y sus PINs (Puedes cambiarlos aquí)
+// Lista de hermanos autorizados
 const BROTHERS = {
-    'Fabio': { pin: '11' },
-    'Juan Carlos': { pin: '22' },
-    'Ronald': { pin: '33' },
-    'Luis': { pin: '44' }
+    'Fabio': {},
+    'Juan Carlos': {},
+    'Ronald': {},
+    'Luis': {}
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -45,9 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const pinModal = document.getElementById('pin-modal');
     const pinInput = document.getElementById('pin-input');
     const pinTitle = document.getElementById('pin-title');
+    const pinSubtitle = document.getElementById('pin-subtitle');
     const verifyPinBtn = document.getElementById('verify-pin-btn');
     const biometricBtn = document.getElementById('biometric-btn');
+    
     let selectedUser = null;
+    let loginStep = 'LOGIN'; // 'SET', 'CONFIRM', 'LOGIN'
+    let tempPin = '';
 
     // Estado de la app
     let allLoans = [];
@@ -56,10 +60,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MANEJO DE SESIÓN ---
     window.selectUser = (name) => {
         selectedUser = name;
+        const savedPin = localStorage.getItem(`rzbros_pin_${name}`);
+        
         pinTitle.textContent = `Hola, ${name}`;
         pinModal.classList.remove('hidden');
         pinInput.focus();
-        
+
+        if (!savedPin) {
+            loginStep = 'SET';
+            pinSubtitle.textContent = 'Crea tu PIN de 2 dígitos';
+        } else {
+            loginStep = 'LOGIN';
+            pinSubtitle.textContent = 'Ingresa tu PIN';
+        }
+
         // Mostrar botón de biometría si el navegador lo soporta
         if (window.PublicKeyCredential) {
             biometricBtn.classList.remove('hidden');
@@ -72,11 +86,41 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     verifyPinBtn.addEventListener('click', () => {
-        if (pinInput.value === BROTHERS[selectedUser].pin) {
-            loginSuccess(selectedUser);
-        } else {
-            showToast("PIN incorrecto", true);
+        const pinValue = pinInput.value;
+
+        if (pinValue.length < 2) {
+            showToast("Ingresa 2 dígitos", true);
+            return;
+        }
+
+        const savedPin = localStorage.getItem(`rzbros_pin_${selectedUser}`);
+
+        if (loginStep === 'SET') {
+            tempPin = pinValue;
+            loginStep = 'CONFIRM';
+            pinSubtitle.textContent = 'Confirma tu PIN';
             pinInput.value = '';
+            pinInput.focus();
+            showToast("Ahora confirma tu PIN");
+        } 
+        else if (loginStep === 'CONFIRM') {
+            if (pinValue === tempPin) {
+                localStorage.setItem(`rzbros_pin_${selectedUser}`, pinValue);
+                loginSuccess(selectedUser);
+            } else {
+                showToast("Los PINs no coinciden, intenta de nuevo", true);
+                loginStep = 'SET';
+                pinSubtitle.textContent = 'Crea tu PIN de 2 dígitos';
+                pinInput.value = '';
+            }
+        } 
+        else if (loginStep === 'LOGIN') {
+            if (pinValue === savedPin) {
+                loginSuccess(selectedUser);
+            } else {
+                showToast("PIN incorrecto", true);
+                pinInput.value = '';
+            }
         }
     });
 
