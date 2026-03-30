@@ -159,6 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filteredLoans.forEach(loan => {
             const amount = parseFloat(loan.amount);
+            const interest = parseFloat(loan.interest) || 0;
             const loanElement = document.createElement('div');
             loanElement.className = 'p-4 border border-slate-800 rounded-xl shadow-sm bg-slate-900';
             loanElement.innerHTML = `
@@ -166,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <p class="font-bold text-lg text-slate-100">${loan.client}</p>
                         <p class="text-slate-400">Monto: <span class="font-semibold text-blue-400">${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount)}</span></p>
+                        ${interest > 0 ? `<p class="text-slate-400 text-xs italic">Interés: ${interest}%</p>` : ''}
                         <p class="text-slate-400">Fecha: <span class="font-semibold text-slate-200">${loan.loanDate}</span></p>
                         ${loan.details ? `<p class="text-sm text-slate-500 mt-1">Detalles: ${loan.details}</p>` : ''}
                     </div>
@@ -200,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .where('owner', '==', currentUser)
             .onSnapshot(
                 snapshot => {
-                    console.log("Conexión v30 exitosa. Documentos encontrados:", snapshot.size);
+                        console.log("Conexión v31 exitosa. Documentos:", snapshot.size);
                     allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     renderLoans(allLoans);
                 },
@@ -299,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const loanId = loanIdInput.value;
         const client = document.getElementById('client-name').value;
         const amount = parseFloat(document.getElementById('loan-amount').value);
+        const interest = parseFloat(document.getElementById('loan-interest').value) || 0;
         const loanDate = document.getElementById('loan-date').value; // Get the new date value
         const details = document.getElementById('loan-details').value;
         const receiptFile = document.getElementById('loan-receipt').files[0];
@@ -346,6 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loanIdInput.value = loanToEdit.id;
                 document.getElementById('client-name').value = loanToEdit.client;
                 document.getElementById('loan-amount').value = parseFloat(loanToEdit.amount);
+                document.getElementById('loan-interest').value = parseFloat(loanToEdit.interest) || 0;
                 document.getElementById('loan-date').value = loanToEdit.loanDate; // Populate date field
                 document.getElementById('loan-details').value = loanToEdit.details || '';
                 
@@ -407,6 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tableData = filteredLoans.map(loan => [
             loan.client,
             new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(loan.amount),
+            loan.interest ? `${loan.interest}%` : '0%',
             loan.loanDate,
             loan.details || ''
         ]);
@@ -416,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         doc.autoTable({
             startY: 35,
-            head: [['Cliente', 'Monto', 'Fecha', 'Detalles']],
+            head: [['Cliente', 'Monto', 'Int.', 'Fecha', 'Detalles']],
             body: tableData,
             foot: [['', `TOTAL: ${formattedTotal}`, '', '']],
             footStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
