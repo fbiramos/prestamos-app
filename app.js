@@ -389,11 +389,16 @@ document.addEventListener('DOMContentLoaded', () => {
             loan.loanDate,
             loan.details || ''
         ]);
+        
+        const total = filteredLoans.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
+        const formattedTotal = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total);
 
         doc.autoTable({
             startY: 30,
             head: [['Cliente', 'Monto', 'Fecha', 'Detalles']],
             body: tableData,
+            foot: [['', `TOTAL: ${formattedTotal}`, '', '']],
+            footStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
             headStyles: { fillColor: [2, 117, 216] }, // Azul de la marca
         });
 
