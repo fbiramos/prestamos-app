@@ -46,8 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const pinInput = document.getElementById('pin-input');
     const pinTitle = document.getElementById('pin-title');
     const pinSubtitle = document.getElementById('pin-subtitle');
-    const verifyPinBtn = document.getElementById('verify-pin-btn');
-    const biometricBtn = document.getElementById('biometric-btn');
     
     let selectedUser = null;
     let loginStep = 'LOGIN'; // 'SET', 'CONFIRM', 'LOGIN'
@@ -73,11 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loginStep = 'LOGIN';
             pinSubtitle.textContent = 'Ingresa tu PIN';
         }
-
-        // Mostrar botón de biometría si el navegador lo soporta
-        if (window.PublicKeyCredential) {
-            biometricBtn.classList.remove('hidden');
-        }
     };
 
     window.cancelLogin = () => {
@@ -85,11 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
         pinInput.value = '';
     };
 
-    verifyPinBtn.addEventListener('click', () => {
+    // Validación automática al ingresar exactamente 2 dígitos
+    pinInput.addEventListener('input', () => {
         const pinValue = pinInput.value;
 
-        if (pinValue.length < 2) {
-            showToast("Ingresa 2 dígitos", true);
+        if (pinValue.length !== 2) {
             return;
         }
 
@@ -137,24 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('rzbros_user');
         location.reload();
     };
-
-    // Simulación simple de biometría (En PWAs usa el bloqueo del sistema si está configurado)
-    biometricBtn.addEventListener('click', async () => {
-        try {
-            // Esto dispara la autenticación nativa del dispositivo
-            const auth = await navigator.credentials.create({
-                publicKey: {
-                    challenge: new Uint8Array([1, 2, 3, 4]),
-                    rp: { name: "RZBRO$" },
-                    user: { id: new Uint8Array([1]), name: selectedUser, displayName: selectedUser },
-                    pubKeyCredParams: [{ alg: -7, type: "public-key" }]
-                }
-            });
-            if (auth) loginSuccess(selectedUser);
-        } catch (e) {
-            showToast("Usa el PIN para ingresar");
-        }
-    });
 
     // --- NOTIFICACIONES ---
     const showToast = (message, isError = false) => {
