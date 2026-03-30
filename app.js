@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("App iniciada. Verificando sesión...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
-        apiKey: "TU_API_KEY_REAL_AQUI", 
+        apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
         authDomain: "prestamos-app-dfddb.firebaseapp.com",
         projectId: "prestamos-app-dfddb",
         storageBucket: "prestamos-app-dfddb.appspot.com",
