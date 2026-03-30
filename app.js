@@ -7,6 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("App iniciada. Verificando sesión...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", // <-- ¡Reemplaza con tu API Key real!
@@ -180,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const initFirestoreListener = () => {
+        console.log("Iniciando conexión con Firestore para:", currentUser);
         if (unsubscribe) unsubscribe();
         
         // Mostrar un estado de carga más específico
@@ -423,8 +425,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- INICIO DE APP ---
     document.getElementById('loan-date').value = new Date().toISOString().split('T')[0];
     if (currentUser) {
+        console.log("Usuario detectado:", currentUser);
         userSelection.classList.add('hidden');
         initFirestoreListener();
+    } else {
+        console.log("No hay sesión activa.");
     }
 });
 
