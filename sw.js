@@ -1,12 +1,12 @@
-const CACHE_NAME = 'prestamos-cache-v14';
+const CACHE_NAME = 'prestamos-cache-v15';
 const urlsToCache = [
   '/',
   '/index.html',
   '/style.css',
   '/app.js',
   'https://cdn.tailwindcss.com',
-  '/icons/icon-192x192.png?v=3',
-  '/icons/icon-512x512.png?v=3'
+  '/icons/icon-192x192.png?v=4',
+  '/icons/icon-512x512.png?v=4'
 ];
 
 self.addEventListener('install', event => {
