@@ -1,12 +1,12 @@
-const CACHE_NAME = 'prestamos-cache-v12';
+const CACHE_NAME = 'prestamos-cache-v13';
 const urlsToCache = [
   '/',
   '/index.html',
   '/style.css',
   '/app.js',
   'https://cdn.tailwindcss.com',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/icons/icon-192x192.png?v=2',
+  '/icons/icon-512x512.png?v=2'
 ];
 
 self.addEventListener('install', event => {
@@ -25,6 +25,14 @@ self.addEventListener('fetch', event => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
+        .then(response => {
+          // Guardamos la versión más reciente en la caché para la próxima vez
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, copy);
+          });
+          return response;
+        })
         .catch(() => {
           // Si falla la red, buscamos en la caché
           return caches.match(event.request);
