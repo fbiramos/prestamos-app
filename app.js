@@ -163,17 +163,17 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredLoans.forEach(loan => {
             const amount = parseFloat(loan.amount);
             const loanElement = document.createElement('div');
-            loanElement.className = 'p-4 border rounded-lg shadow-sm bg-slate-50';
+            loanElement.className = 'p-4 border border-slate-800 rounded-xl shadow-sm bg-slate-900';
             loanElement.innerHTML = `
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="font-bold text-lg">${loan.client}</p>
-                        <p class="text-gray-800">Monto: <span class="font-semibold text-blue-600">${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount)}</span></p>
-                        <p class="text-gray-800">Fecha: <span class="font-semibold">${loan.loanDate}</span></p>
-                        ${loan.details ? `<p class="text-sm text-gray-600 mt-1">Detalles: ${loan.details}</p>` : ''}
+                        <p class="font-bold text-lg text-slate-100">${loan.client}</p>
+                        <p class="text-slate-400">Monto: <span class="font-semibold text-blue-400">${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount)}</span></p>
+                        <p class="text-slate-400">Fecha: <span class="font-semibold text-slate-200">${loan.loanDate}</span></p>
+                        ${loan.details ? `<p class="text-sm text-slate-500 mt-1">Detalles: ${loan.details}</p>` : ''}
                     </div>
                     <div class="flex space-x-2">
-                        <button data-id="${loan.id}" class="edit-btn bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm">Editar</button>
+                        <button data-id="${loan.id}" class="edit-btn bg-amber-600/20 text-amber-500 border border-amber-600/30 px-3 py-1 rounded hover:bg-amber-600/30 text-sm transition-colors">Editar</button>
                         <button data-id="${loan.id}" class="remove-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">PAGADO</button>
                     </div>
                 </div>
