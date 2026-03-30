@@ -182,16 +182,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const initFirestoreListener = () => {
         if (unsubscribe) unsubscribe();
         
+        // Mostrar un estado de carga más específico
+        loansList.innerHTML = `
+            <div class="flex justify-center items-center p-8 text-slate-500">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
+                <span>Sincronizando con la nube...</span>
+            </div>`;
+
         // Filtramos solo los préstamos del usuario actual
         unsubscribe = db.collection('loans')
             .where('owner', '==', currentUser)
             .onSnapshot(
                 snapshot => {
+                    console.log("Datos recibidos de Firestore");
                     allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     renderLoans(allLoans);
                 },
                 error => {
                     console.error("Error Firestore: ", error);
+                    loansList.innerHTML = `
+                        <div class="p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm">
+                            <p class="font-bold">Error de conexión:</p>
+                            <p>${error.message}</p>
+                            <button onclick="location.reload()" class="mt-2 underline text-xs">Reintentar</button>
+                        </div>`;
                 }
             );
     };
