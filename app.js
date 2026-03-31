@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("App iniciada. Verificando sesión...");
+    console.log("🚀 RZBRO$ v35 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveBtn = document.getElementById('save-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
     const totalAmountDisplay = document.getElementById('total-amount');
+    const totalToPayDisplay = document.getElementById('total-to-pay');
     const exportPdfBtn = document.getElementById('export-pdf-btn');
     
     // Elementos de Login
@@ -144,20 +145,32 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- RENDERIZADO ---
-    const renderLoans = (loans) => {
+    const renderLoans = (allData) => {
         loansList.innerHTML = '';
-        const filteredLoans = loans;
+        
+        // Cobros: Préstamos que yo otorgué (soy el dueño)
+        const receivables = allData.filter(l => l.owner === currentUser);
+        // Pagos: Préstamos donde yo soy el cliente
+        const payables = allData.filter(l => l.client && l.client.toLowerCase() === currentUser.toLowerCase());
 
-        // Calcular Total
-        const total = filteredLoans.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
-        totalAmountDisplay.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total);
+        const totalReceivables = receivables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
+        const totalPayables = payables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
 
-        if (filteredLoans.length === 0) {
-            loansList.innerHTML = '<div class="text-center py-10 text-slate-500 font-bold uppercase tracking-widest text-sm">NO DEBES NI TE DEBEN</div>';
+        totalAmountDisplay.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(totalReceivables);
+        if (totalToPayDisplay) {
+            totalToPayDisplay.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(totalPayables);
+        }
+
+        allLoans = receivables; // Mantenemos Cobros para la gestión de la lista y exportación
+
+        if (receivables.length === 0) {
+            loansList.innerHTML = `<div class="text-center py-10 text-slate-500 font-bold uppercase tracking-widest text-sm">
+                ${totalPayables > 0 ? 'SIN PRÉSTAMOS POR COBRAR' : 'NO DEBES NI TE DEBEN'}
+            </div>`;
             return;
         }
 
-        filteredLoans.forEach(loan => {
+        receivables.forEach(loan => {
             const amount = parseFloat(loan.amount);
             const interest = parseFloat(loan.interest) || 0;
             const loanElement = document.createElement('div');
@@ -187,32 +200,30 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("Configuración Firebase:", firebase.app().options.projectId);
-        console.log("Iniciando listener v33 para:", currentUser);
+        console.log("📡 Conectando Firestore para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
-        // Mostrar un estado de carga más específico
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v33...</span>
+                <span>Conectando v35...</span>
             </div>`;
 
-        /**
-         * DIAGNÓSTICO: Si el error persiste, intentaremos quitar el .where() 
-         * temporalmente para ver si el problema es el filtro o la regla general.
-         */
-        const query = db.collection('loans').where('owner', '==', currentUser);
-
-        unsubscribe = query.onSnapshot(
+        // Obtenemos todos los datos para filtrar cobros y pagos localmente
+        unsubscribe = db.collection('loans')
+            .onSnapshot(
                 snapshot => {
-                    console.log("¡ÉXITO v33! Documentos encontrados:", snapshot.size);
-                    allLoans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    renderLoans(allLoans);
+                    console.log("✅ Datos sincronizados.");
+                    const allData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    renderLoans(allData);
                 },
                 error => {
-                    console.error("DETALLE DEL ERROR DE PERMISOS:", error.code, error.message);
+                    console.error("❌ ERROR CRÍTICO:", error.code, error.message);
+                    let friendlyMsg = error.message;
+                    if (error.code === 'permission-denied') {
+                        friendlyMsg = "Firebase bloqueó el acceso. Revisa las 'Rules' en la consola y dales a 'Publish'.";
+                    }
                     loansList.innerHTML = `
                         <div class="p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm">
                             <p class="font-bold">Error de conexión:</p>
