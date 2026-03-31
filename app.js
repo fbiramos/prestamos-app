@@ -394,13 +394,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         allLoans = receivables; // Mantenemos Cobros para la gestión de la lista y exportación
 
-        if (receivables.length === 0) {
-            loansList.innerHTML = `<div class="text-center py-10 text-slate-500 font-bold uppercase tracking-widest text-sm">
-                ${totalPayables > 0 ? 'SIN PRÉSTAMOS POR COBRAR' : 'NO DEBES NI TE DEBEN'}
-            </div>`;
-            return;
-        }
-
         // Renderizar Deudas Pendientes (Sección superior de la lista)
         if (payables.length > 0) {
             const pendingSection = document.createElement('div');
@@ -436,44 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (pendingSection.children.length > 1) loansList.appendChild(pendingSection);
         }
-
-        // Renderizar Mis Cobros
-        const receivablesHeader = document.createElement('h3');
-        receivablesHeader.className = 'text-blue-500 font-bold text-sm mb-4 uppercase tracking-widest';
-        receivablesHeader.textContent = 'Tus Préstamos Activos';
-        loansList.appendChild(receivablesHeader);
-
-        receivables.forEach(loan => {
-            const { original, remaining, paid } = getLoanBalance(loan);
-            const loanElement = document.createElement('div');
-            loanElement.className = 'p-4 border border-slate-800 rounded-xl shadow-sm bg-slate-900';
-            
-            const isPaid = remaining <= 0;
-            // Resumen de estados para el dueño
-            let statusInfo = '';
-            if(loan.statuses) {
-                statusInfo = `<div class="mt-2 flex gap-1 flex-wrap">${Object.entries(loan.statuses).map(([name, st]) => `<span class="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase ${st === 'accepted' ? 'bg-emerald-500/10 text-emerald-500' : st === 'rejected' ? 'bg-red-500/10 text-red-500' : 'bg-slate-800 text-slate-500'}">${name.charAt(0)}: ${st}</span>`).join('')}</div>`;
-            }
-
-            loanElement.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="font-bold text-lg text-slate-100">${loan.client}</p>
-                        <p class="text-slate-400">Saldo: <span class="font-semibold ${isPaid ? 'text-emerald-500' : 'text-blue-400'}">${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(remaining)}</span></p>
-                        ${paid > 0 ? `<p class="text-[10px] text-slate-500 italic">Original: ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(original)}</p>` : ''}
-                        <p class="text-[10px] text-slate-500 mt-1">Fecha: <span class="font-semibold text-slate-200">${loan.loanDate}</span></p>
-                        ${loan.details ? `<p class="text-sm text-slate-500 mt-1">Detalles: ${loan.details}</p>` : ''}
-                    </div>
-                    <div class="flex space-x-2">
-                        <button data-id="${loan.id}" class="edit-btn bg-amber-600/20 text-amber-500 border border-amber-600/30 px-3 py-1 rounded hover:bg-amber-600/30 text-sm transition-colors">Editar</button>
-                        <button data-id="${loan.id}" class="remove-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">PAGADO</button>
-                    </div>
-                </div>
-                ${statusInfo}
-                ${loan.receiptURL ? `<div class="mt-2"><a href="${loan.receiptURL}" target="_blank" class="text-red-500 hover:underline text-sm">Ver Comprobante</a></div>` : ''}
-            `;
-            loansList.appendChild(loanElement);
-        });
     };
 
     const renderBrotherDetail = (brotherName) => {
