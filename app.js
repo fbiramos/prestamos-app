@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v48 Iniciando...");
+    console.log("🚀 RZBRO$ v49 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -181,18 +181,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.className = 'bg-slate-800 border border-slate-700 p-4 rounded-xl font-bold text-slate-200 hover:border-blue-500 active:scale-95 transition-all text-sm uppercase';
                 btn.textContent = name;
                 btn.onclick = () => {
-                    // Limpiar selecciones previas visualmente
-                    formContainer.querySelectorAll('button').forEach(b => {
-                        b.classList.remove('bg-blue-600', 'border-blue-400');
-                        b.classList.add('bg-slate-800', 'border-slate-700');
-                    });
-                    // Resaltar el botón seleccionado
-                    btn.classList.remove('bg-slate-800', 'border-slate-700');
-                    btn.classList.add('bg-blue-600', 'border-blue-400');
-                    
-                    document.getElementById('client-name').value = name;
-                    showToast(`Seleccionado: ${name}`);
+                    if (selectedBrothers.includes(name)) {
+                        // Deseleccionar
+                        selectedBrothers = selectedBrothers.filter(n => n !== name);
+                        btn.classList.remove('bg-blue-600', 'border-blue-400');
+                        btn.classList.add('bg-slate-800', 'border-slate-700');
+                    } else {
+                        // Seleccionar
+                        selectedBrothers.push(name);
+                        btn.classList.remove('bg-slate-800', 'border-slate-700');
+                        btn.classList.add('bg-blue-600', 'border-blue-400');
+                    }
+                    document.getElementById('client-name').value = selectedBrothers.join(', ');
                 };
+                // Mantener estado visual si ya estaba seleccionado (ej: al editar)
+                if (selectedBrothers.includes(name)) {
+                    btn.classList.replace('bg-slate-800', 'bg-blue-600');
+                    btn.classList.replace('border-slate-700', 'border-blue-400');
+                }
                 formContainer.appendChild(btn);
             });
         }
@@ -233,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cobros: Préstamos que yo otorgué (soy el dueño)
         const receivables = allData.filter(l => l.owner === currentUser);
         // Pagos: Préstamos donde yo soy el cliente
-        const payables = allData.filter(l => l.client && l.client.toLowerCase() === currentUser.toLowerCase());
+        const payables = allData.filter(l => l.client && l.client.toLowerCase().split(',').map(s => s.trim()).includes(currentUser.toLowerCase()));
 
         const totalReceivables = receivables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
         const totalPayables = payables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
@@ -289,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v48...</span>
+                <span>Conectando v49...</span>
             </div>`;
 
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
@@ -454,20 +460,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('loan-amount').value = parseFloat(loanToEdit.amount);
                 document.getElementById('loan-details').value = loanToEdit.details || '';
                 
-                // Resaltar el botón del hermano si coincide en la edición
-                const formBrothers = document.getElementById('form-brothers-container');
-                if (formBrothers) {
-                    formBrothers.querySelectorAll('button').forEach(b => {
-                        if (b.textContent === loanToEdit.client) {
-                            b.classList.remove('bg-slate-800', 'border-slate-700');
-                            b.classList.add('bg-blue-600', 'border-blue-400');
-                        } else {
-                            b.classList.remove('bg-blue-600', 'border-blue-400');
-                            b.classList.add('bg-slate-800', 'border-slate-700');
-                        }
-                    });
+                // Cargar selección de hermanos
+                if (loanToEdit.client) {
+                    selectedBrothers = loanToEdit.client.split(',').map(s => s.trim());
+                    renderBrothersStatus(); // Refrescar visualmente los botones en el form
                 }
-
                 saveBtn.textContent = 'Actualizar Préstamo';
                 cancelEditBtn.classList.remove('hidden');
                 
@@ -500,15 +497,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loanReceiptInput.value = '';
         saveBtn.textContent = 'Guardar Préstamo';
         cancelEditBtn.classList.add('hidden');
-
-        // Resetear visualmente los botones de hermanos en el formulario
-        const formBrothers = document.getElementById('form-brothers-container');
-        if (formBrothers) {
-            formBrothers.querySelectorAll('button').forEach(b => {
-                b.classList.remove('bg-blue-600', 'border-blue-400');
-                b.classList.add('bg-slate-800', 'border-slate-700');
-            });
-        }
+        selectedBrothers = [];
+        renderBrothersStatus();
     };
 
     // Botón cancelar dentro del formulario
