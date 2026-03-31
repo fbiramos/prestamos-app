@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v44 Iniciando...");
+    console.log("🚀 RZBRO$ v45 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -121,11 +121,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Navegación a la "página" de nuevo préstamo
+    // --- NAVEGACIÓN Y HISTORIAL ---
+    const updateView = (view) => {
+        if (view === 'form') {
+            dashboardView.classList.add('hidden');
+            formView.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        } else {
+            dashboardView.classList.remove('hidden');
+            formView.classList.add('hidden');
+            clearForm();
+        }
+    };
+
+    window.goBack = () => {
+        if (!formView.classList.contains('hidden')) {
+            history.back();
+        }
+    };
+
+    window.addEventListener('popstate', (event) => {
+        if (event.state && event.state.view === 'form') {
+            updateView('form');
+        } else {
+            updateView('dashboard');
+        }
+    });
+
     toggleFormBtn.addEventListener('click', () => {
-        dashboardView.classList.add('hidden');
-        formView.classList.remove('hidden');
-        window.scrollTo(0, 0);
+        history.pushState({ view: 'form' }, '');
+        updateView('form');
     });
 
     const renderBrothersStatus = () => {
@@ -154,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pinModal.classList.add('hidden');
         initFirestoreListener();
         renderBrothersStatus();
+        history.replaceState({ view: 'dashboard' }, '');
         showToast(`Bienvenido ${userName}`);
     };
 
@@ -237,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v44...</span>
+                <span>Conectando v45...</span>
             </div>`;
 
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
@@ -380,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Hubo un error al guardar. Inténtalo de nuevo.");
         } finally {
             saveBtn.disabled = false;
-            resetForm();
+            history.back();
         }
     });
 
@@ -402,9 +428,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveBtn.textContent = 'Actualizar Préstamo';
                 cancelEditBtn.classList.remove('hidden');
                 
-                dashboardView.classList.add('hidden');
-                formView.classList.remove('hidden');
-                window.scrollTo(0, 0);
+                history.pushState({ view: 'form' }, '');
+                updateView('form');
             }
         } else if (e.target.classList.contains('remove-btn')) {
             if (confirm('¿Seguro que quieres marcar este préstamo como pagado?')) {
@@ -426,18 +451,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const resetForm = () => {
+    const clearForm = () => {
         loanForm.reset();
         loanIdInput.value = '';
-        // Establecer la fecha de hoy por defecto tras limpiar
         document.getElementById('loan-date').value = new Date().toISOString().split('T')[0];
-        loanReceiptInput.value = ''; // Limpiar el input de archivo físicamente
+        loanReceiptInput.value = '';
         saveBtn.textContent = 'Guardar Préstamo';
         cancelEditBtn.classList.add('hidden');
-        loanFormContainer.classList.add('hidden');
     };
 
-    cancelEditBtn.addEventListener('click', resetForm);
+    // Botón cancelar dentro del formulario
+    cancelEditBtn.addEventListener('click', goBack);
 
     // --- EXPORTAR A PDF ---
     exportPdfBtn.addEventListener('click', () => {
@@ -488,6 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userSelection.classList.add('hidden');
         initFirestoreListener();
         renderBrothersStatus();
+        history.replaceState({ view: 'dashboard' }, '');
     } else {
         console.log("No hay sesión activa.");
     }
