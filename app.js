@@ -569,6 +569,37 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Abono registrado correctamente");
     };
 
+    // --- SCRIPT ADMINISTRATIVO DE REINICIO ---
+    // Para usar: Abrir consola (F12) en PC y escribir: resetAllData()
+    window.resetAllData = async () => {
+        if (!confirm("⚠️ ATENCIÓN: Vas a borrar todos los datos de RZBRO$ en todos los dispositivos. ¿Continuar?")) return;
+        
+        try {
+            showToast("Iniciando limpieza total...");
+            const snapshot = await db.collection('loans').get();
+            const batch = db.batch();
+            
+            for (const doc of snapshot.docs) {
+                const data = doc.data();
+                // Borrar imagen si existe
+                if (data.receiptURL) {
+                    try {
+                        const imageRef = storage.refFromURL(data.receiptURL);
+                        await imageRef.delete().catch(() => {});
+                    } catch (e) {}
+                }
+                batch.delete(doc.ref);
+            }
+
+            await batch.commit();
+            showToast("Sistema reiniciado a cero con éxito");
+            setTimeout(() => location.reload(), 1000);
+        } catch (error) {
+            console.error("Error en el reinicio maestro:", error);
+            showToast("Error al limpiar datos", true);
+        }
+    };
+
     window.liquidateAccounts = async (brotherName) => {
         const collections = globalData.filter(l => l.owner === currentUser && l.client && l.client.includes(brotherName));
         const debts = globalData.filter(l => l.owner === brotherName && l.client && l.client.includes(currentUser) && l.statuses && l.statuses[currentUser] === 'accepted');
