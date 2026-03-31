@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v57 Iniciando...");
+    console.log("🚀 RZBRO$ v58 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -302,7 +302,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cobros: Préstamos que yo otorgué (soy el dueño)
         const receivables = allData.filter(l => l.owner === currentUser);
         // Pagos: Préstamos donde yo soy el cliente
-        const payables = allData.filter(l => l.client && l.client.split(',').map(s => s.trim()).includes(currentUser));
+        const payables = allData.filter(l => 
+            l.client && 
+            l.client.split(',').map(s => s.trim()).includes(currentUser) &&
+            (!l.statuses || l.statuses[currentUser] !== 'rejected')
+        );
 
         const totalReceivables = receivables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
         const totalPayables = payables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
@@ -334,7 +338,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mis deudas con este hermano (Todas: pendientes, aceptadas, etc.)
         const myDebts = globalData.filter(l =>
             l.owner === brotherName &&
-            l.client && l.client.split(',').map(s => s.trim()).includes(currentUser)
+            l.client && l.client.split(',').map(s => s.trim()).includes(currentUser) &&
+            (!l.statuses || l.statuses[currentUser] !== 'rejected')
         );
 
         // Renderizar Cobros
@@ -400,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v57 para:", currentUser);
+        console.log("📡 Conectando Firestore v58 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -408,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v57.");
+                    console.log("✅ Datos sincronizados v58.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     checkNewNotifications(globalData);
                     renderLoans(globalData);
