@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v60 Iniciando...");
+    console.log("🚀 RZBRO$ v61 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Elementos del DOM
     const loanForm = document.getElementById('loan-form');
-    const loansList = document.getElementById('loans-list');
     const loanIdInput = document.getElementById('loan-id');
     const dashboardView = document.getElementById('dashboard-view');
     const formView = document.getElementById('form-view');
@@ -555,12 +554,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (unsubscribe) unsubscribe();
         
-        loansList.innerHTML = `
-            <div class="flex justify-center items-center p-8 text-slate-500">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v60...</span>
-            </div>`;
-
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
         unsubscribe = db.collection('loans')
             .onSnapshot(
@@ -585,12 +578,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (error.code === 'permission-denied') {
                         friendlyMsg = "Firebase bloqueó el acceso. Revisa las 'Rules' en la consola y dales a 'Publish'.";
                     }
-                    loansList.innerHTML = `
-                        <div class="p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-sm">
-                            <p class="font-bold">Error de conexión:</p>
-                            <p>${error.message}</p>
-                            <button onclick="location.reload()" class="mt-2 underline text-xs">Reintentar</button>
-                        </div>`;
                 }
             );
     };
@@ -723,50 +710,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             saveBtn.disabled = false;
             history.back();
-        }
-    });
-
-    // --- MODO EDICIÓN Y BORRADO ---
-    loansList.addEventListener('click', (e) => {
-        const loanId = e.target.getAttribute('data-id');
-        if (!loanId) return;
-
-        if (e.target.classList.contains('edit-btn')) {
-            const loanToEdit = allLoans.find(loan => loan.id === loanId);
-            if (loanToEdit) {
-                loanIdInput.value = loanToEdit.id;
-                document.getElementById('client-name').value = loanToEdit.client;
-                document.getElementById('loan-amount').value = parseFloat(loanToEdit.amount);
-                document.getElementById('loan-details').value = loanToEdit.details || '';
-                
-                // Cargar selección de hermanos
-                if (loanToEdit.client) {
-                    selectedBrothers = loanToEdit.client.split(',').map(s => s.trim());
-                    renderBrothersStatus(); // Refrescar visualmente los botones en el form
-                }
-                saveBtn.textContent = 'Actualizar Préstamo';
-                cancelEditBtn.classList.remove('hidden');
-                
-                history.pushState({ view: 'form' }, '');
-                updateView('form');
-            }
-        } else if (e.target.classList.contains('remove-btn')) {
-            if (confirm('¿Seguro que quieres marcar este préstamo como pagado?')) {
-                const loanToDelete = allLoans.find(loan => loan.id === loanId);
-
-                // Si el préstamo tiene una imagen, la borramos de Storage
-                if (loanToDelete && loanToDelete.receiptURL) {
-                    const imageRef = storage.refFromURL(loanToDelete.receiptURL);
-                    imageRef.delete().catch(error => {
-                        console.error("Error al eliminar el archivo físico:", error);
-                    });
-                }
-
-                // Borramos el registro de la base de datos
-                db.collection('loans').doc(loanId).delete()
-                    .then(() => showToast("Préstamo marcado como pagado"))
-                    .catch(error => console.error("Error borrando el registro: ", error));
-            }
         }
     });
 
