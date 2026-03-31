@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v54 Iniciando...");
+    console.log("🚀 RZBRO$ v55 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const formView = document.getElementById('form-view');
     const brotherDetailView = document.getElementById('brother-detail-view');
     const brotherDetailTitle = document.getElementById('brother-detail-title');
-    const brotherLoansList = document.getElementById('brother-loans-list');
     const toggleFormBtn = document.getElementById('toggle-form-btn');
     const saveBtn = document.getElementById('save-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
@@ -318,7 +317,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderBrotherDetail = (brotherName) => {
         brotherDetailTitle.textContent = `Estado con ${brotherName}`;
-        brotherLoansList.innerHTML = '';
+        
+        const collectionsCol = document.getElementById('collections-col');
+        const debtsCol = document.getElementById('debts-col');
+        
+        if (!collectionsCol || !debtsCol) return;
+        
+        collectionsCol.innerHTML = '';
+        debtsCol.innerHTML = '';
 
         // Cobros por hacer a este hermano
         const myCollections = globalData.filter(l => 
@@ -332,31 +338,41 @@ document.addEventListener('DOMContentLoaded', () => {
             l.statuses && l.statuses[currentUser] === 'accepted'
         );
 
-        const combined = [...myCollections, ...myAcceptedDebts];
-        if (combined.length === 0) {
-            brotherLoansList.innerHTML = `<div class="text-center py-20 text-slate-600 font-bold uppercase tracking-widest text-xs">Sin movimientos pendientes</div>`;
-            return;
+        // Renderizar Cobros
+        if (myCollections.length === 0) {
+            collectionsCol.innerHTML = `<p class="text-[10px] text-slate-700 text-center py-4 italic uppercase">Sin cobros</p>`;
+        } else {
+            myCollections.sort((a, b) => new Date(b.loanDate) - new Date(a.loanDate));
+            myCollections.forEach(loan => {
+                const card = document.createElement('div');
+                card.className = 'p-3 border border-blue-500/20 rounded-xl bg-slate-900/50 mb-2';
+                card.innerHTML = `
+                    <p class="font-bold text-slate-100 text-sm truncate">${loan.client}</p>
+                    <p class="text-lg font-black text-blue-400">$${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
+                    <div class="flex justify-between items-center mt-1">
+                        <p class="text-[8px] text-slate-600 uppercase font-bold">${loan.loanDate}</p>
+                    </div>
+                `;
+                collectionsCol.appendChild(card);
+            });
         }
 
-        combined.sort((a,b) => new Date(b.loanDate) - new Date(a.loanDate));
-
-        combined.forEach(loan => {
-            const isCollection = loan.owner === currentUser;
-            const card = document.createElement('div');
-            card.className = `p-4 border rounded-xl bg-slate-900 shadow-sm mb-3 ${isCollection ? 'border-blue-500/30' : 'border-rose-500/30'}`;
-            card.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[10px] font-bold uppercase ${isCollection ? 'text-blue-400' : 'text-rose-400'} mb-1">${isCollection ? 'Cobro Pendiente' : 'Deuda Aceptada'}</p>
-                        <p class="font-bold text-slate-100">${isCollection ? loan.client : 'De: ' + loan.owner}</p>
-                        <p class="text-xl font-black ${isCollection ? 'text-white' : 'text-slate-200'} mt-1">$ ${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
-                        <p class="text-[10px] text-slate-500 mt-2 italic">${loan.loanDate}</p>
-                    </div>
-                    ${loan.details ? `<p class="text-[10px] text-slate-500 max-w-[100px] text-right">${loan.details}</p>` : ''}
-                </div>
-            `;
-            brotherLoansList.appendChild(card);
-        });
+        // Renderizar Deudas
+        if (myAcceptedDebts.length === 0) {
+            debtsCol.innerHTML = `<p class="text-[10px] text-slate-700 text-center py-4 italic uppercase">Sin deudas</p>`;
+        } else {
+            myAcceptedDebts.sort((a, b) => new Date(b.loanDate) - new Date(a.loanDate));
+            myAcceptedDebts.forEach(loan => {
+                const card = document.createElement('div');
+                card.className = 'p-3 border border-rose-500/20 rounded-xl bg-slate-900/50 mb-2';
+                card.innerHTML = `
+                    <p class="font-bold text-slate-100 text-sm truncate">De: ${loan.owner}</p>
+                    <p class="text-lg font-black text-rose-400">$${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
+                    <p class="text-[8px] text-slate-600 uppercase font-bold mt-1">${loan.loanDate}</p>
+                `;
+                debtsCol.appendChild(card);
+            });
+        }
     };
 
     const initFirestoreListener = () => {
@@ -372,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados.");
+                    console.log("✅ Datos sincronizados v55.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     checkNewNotifications(globalData);
                     renderLoans(globalData);
