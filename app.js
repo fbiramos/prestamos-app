@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v45 Iniciando...");
+    console.log("🚀 RZBRO$ v46 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -154,22 +154,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const renderBrothersStatus = () => {
-        const container = document.getElementById('brothers-status-container');
-        if (!container) return;
-        container.innerHTML = '';
-
-        // Filtrar para obtener solo a los otros hermanos
+        const dashboardContainer = document.getElementById('brothers-status-container');
+        const formContainer = document.getElementById('form-brothers-container');
         const others = Object.keys(BROTHERS).filter(name => name !== currentUser);
 
-        others.forEach(name => {
-            const btn = document.createElement('button');
-            btn.className = 'bg-slate-900 border border-slate-700 p-2 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center justify-center sm:justify-between hover:border-blue-500 hover:bg-slate-800 transition-all group active:scale-95 shadow-lg shadow-black/20';
-            btn.innerHTML = `
-                <span class="font-bold text-slate-200 text-xl sm:text-3xl text-center">${name}</span>
-                <span class="text-blue-500 group-hover:translate-x-1 transition-transform hidden sm:inline">→</span>
-            `;
-            container.appendChild(btn);
-        });
+        // Renderizar en el Dashboard
+        if (dashboardContainer) {
+            dashboardContainer.innerHTML = '';
+            others.forEach(name => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-slate-900 border border-slate-700 p-2 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center justify-center sm:justify-between hover:border-blue-500 hover:bg-slate-800 transition-all group active:scale-95 shadow-lg shadow-black/20';
+                btn.innerHTML = `
+                    <span class="font-bold text-slate-200 text-xl sm:text-3xl text-center">${name}</span>
+                    <span class="text-blue-500 group-hover:translate-x-1 transition-transform hidden sm:inline">→</span>
+                `;
+                dashboardContainer.appendChild(btn);
+            });
+        }
+
+        // Renderizar en el Formulario (Selección rápida)
+        if (formContainer) {
+            formContainer.innerHTML = '';
+            others.forEach(name => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'bg-slate-800 border border-slate-700 p-4 rounded-xl font-bold text-slate-200 hover:border-blue-500 active:scale-95 transition-all text-sm uppercase';
+                btn.textContent = name;
+                btn.onclick = () => {
+                    document.getElementById('client-name').value = name;
+                    showToast(`Seleccionado: ${name}`);
+                };
+                formContainer.appendChild(btn);
+            });
+        }
     };
 
     const loginSuccess = (userName) => {
@@ -263,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v45...</span>
+                <span>Conectando v46...</span>
             </div>`;
 
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
