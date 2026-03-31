@@ -398,22 +398,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- RENDERIZADO ---
     const renderLoans = (allData) => {
         const loansList = document.getElementById('active-loans-list');
-        // En realidad, según tu index.html, el contenedor de la lista de préstamos general no estaba definido, 
-        // usaremos una lógica coherente con tu estructura de "Estado de Préstamos" y "Administrar".
+        if (!loansList) return;
+        loansList.innerHTML = '';
         
         // Cobros: Préstamos que yo otorgué (soy el dueño)
         const receivables = allData.filter(l => l.owner === currentUser);
         // Pagos: Préstamos donde yo soy el cliente
         const payables = allData.filter(l => l.client && l.client.split(',').map(s => s.trim()).includes(currentUser));
 
-        // Solo sumamos al total lo que NO ha sido rechazado
+        // Cobrador: No sumamos lo que haya sido rechazado por algún deudor
         const totalReceivables = receivables.reduce((acc, loan) => {
-            const isFullyRejected = Object.values(loan.statuses || {}).every(s => s === 'rejected');
-            if (isFullyRejected) return acc;
+            const hasRejection = Object.values(loan.statuses || {}).includes('rejected');
+            if (hasRejection) return acc;
             return acc + getLoanBalance(loan).remaining;
         }, 0);
 
-        const totalPayables = payables.reduce((acc, loan) => acc + getLoanBalance(loan).remaining, 0);
+        // Deudor: No sumamos deudas que nosotros mismos hemos rechazado
+        const totalPayables = payables.reduce((acc, loan) => {
+            const myStatus = (loan.statuses && loan.statuses[currentUser]) || 'pending';
+            if (myStatus === 'rejected') return acc;
+            return acc + getLoanBalance(loan).remaining;
+        }, 0);
 
         totalAmountDisplay.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(totalReceivables);
         if (totalToPayDisplay) {
@@ -422,15 +427,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         allLoans = receivables; // Mantenemos Cobros para la gestión de la lista y exportación
 
-        // Renderizar Deudas Pendientes (Sección superior de la lista)
+        // 1. Notificación Interna de Rechazos para el Cobrador (Dueño)
+        const rejectedByOthers = receivables.filter(l => Object.values(l.statuses || {}).includes('rejected'));
+        if (rejectedByOthers.length > 0) {
+            const rejectSection = document.createElement('div');
+            rejectSection.className = 'mb-6';
+            rejectSection.innerHTML = `<h3 class="text-red-500 font-bold text-sm mb-3 uppercase tracking-widest flex items-center gap-2">⚠️ Préstamos Rechazados</h3>`;
+            
+            rejectedByOthers.forEach(loan => {
+                const whoRejected = Object.entries(loan.statuses).filter(([n, s]) => s === 'rejected').map(([n]) => n).join(', ');
+                const card = document.createElement('div');
+                card.className = 'p-4 border border-red-900/30 rounded-xl bg-red-950/20 mb-3 shadow-lg flex justify-between items-center';
+                card.innerHTML = `
+                    <div>
+                        <p class="text-[10px] text-red-400 uppercase font-bold mb-1">Rechazado por ${whoRejected}</p>
+                        <p class="text-xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
+                    </div>
+                    <button onclick="viewAdminDetail('${whoRejected.split(',')[0]}')" class="bg-red-600 text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-red-900/40 active:scale-95 transition-all">Revisar</button>
+                `;
+                rejectSection.appendChild(card);
+            });
+            loansList.appendChild(rejectSection);
+        }
+
+        // 2. Renderizar Deudas Pendientes para el Deudor
         if (payables.length > 0) {
             const pendingSection = document.createElement('div');
             pendingSection.className = 'mb-8';
-            pendingSection.innerHTML = `<h3 class="text-rose-500 font-bold text-sm mb-4 uppercase tracking-widest">Tus Deudas por Revisar</h3>`;
+            pendingSection.innerHTML = `<h3 class="text-rose-500 font-bold text-sm mb-4 uppercase tracking-widest">Deudas por Aprobar</h3>`;
             
             payables.forEach(loan => {
                 const status = (loan.statuses && loan.statuses[currentUser]) || 'pending';
-                if (status === 'accepted') return; // Solo mostrar las que requieren atención
+                if (status === 'accepted' || status === 'rejected') return; // Solo pendientes o en revisión
 
                 const card = document.createElement('div');
                 card.className = 'p-4 border border-rose-900/50 rounded-xl bg-slate-900 mb-3 shadow-lg';
@@ -451,7 +479,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-2 rounded-lg text-xs font-bold uppercase">Rechazar</button>
                         ` : ''}
                     </div>
-                    ${status === 'rejected' ? `<p class="text-red-500 text-[10px] mt-2 font-bold italic text-center uppercase">Has rechazado esta deuda</p>` : ''}
                 `;
                 pendingSection.appendChild(card);
             });
