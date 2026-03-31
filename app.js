@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v37 Iniciando...");
+    console.log("🚀 RZBRO$ v38 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -118,12 +118,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const renderBrothersStatus = () => {
+        const container = document.getElementById('brothers-status-container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        // Filtrar para obtener solo a los otros hermanos
+        const others = Object.keys(BROTHERS).filter(name => name !== currentUser);
+
+        others.forEach(name => {
+            const btn = document.createElement('button');
+            btn.className = 'bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between hover:border-blue-500 transition-all group active:scale-95';
+            btn.innerHTML = `
+                <span class="font-bold text-slate-200">${name}</span>
+                <span class="text-blue-500 group-hover:translate-x-1 transition-transform">→</span>
+            `;
+            container.appendChild(btn);
+        });
+    };
+
     const loginSuccess = (userName) => {
         currentUser = userName;
         localStorage.setItem('rzbros_user', userName);
         userSelection.classList.add('hidden');
         pinModal.classList.add('hidden');
         initFirestoreListener();
+        renderBrothersStatus();
         showToast(`Bienvenido ${userName}`);
     };
 
@@ -207,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v37...</span>
+                <span>Conectando v38...</span>
             </div>`;
 
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
@@ -453,6 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Usuario detectado:", currentUser);
         userSelection.classList.add('hidden');
         initFirestoreListener();
+        renderBrothersStatus();
     } else {
         console.log("No hay sesión activa.");
     }
