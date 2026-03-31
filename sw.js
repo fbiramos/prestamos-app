@@ -1,3 +1,24 @@
+importScripts('https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ",
+  projectId: "prestamos-app-dfddb",
+  messagingSenderId: "492698713145",
+  appId: "1:492698713145:web:38f380e443601a817761e8"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/icons/icon-192x192.png'
+  };
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
 const CACHE_NAME = 'prestamos-cache-v62';
 const urlsToCache = [
   '/',

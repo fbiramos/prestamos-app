@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const storage = firebase.storage();
+    const messaging = firebase.messaging();
 
     // Habilitar Persistencia Offline
     db.enablePersistence().catch((err) => {
@@ -132,10 +133,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const requestNotificationPermission = async () => {
         if ('Notification' in window) {
             if (Notification.permission !== 'granted') {
-                await Notification.requestPermission();
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    setupFCM();
+                }
+            } else {
+                setupFCM();
             }
         }
     };
+
+    const setupFCM = async () => {
+        try {
+            // Nota: Debes generar tu 'vapidKey' en la consola de Firebase: 
+            // Configuración del proyecto > Cloud Messaging > Web Push certificates
+            const token = await messaging.getToken({ vapidKey: 'BDIn-r_BQDMCVquSXd0dEEyIs2ZK1Mys7gzh-ws59OtWX6VcpDCt0n1X2FszmqVlD2O4K3QW7Qy1VolVaK_wOjA' }); 
+            if (token) {
+                await db.collection('fcm_tokens').doc(currentUser).set({
+                    token: token,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        } catch (error) {
+            console.warn("FCM Token Error (es normal en desarrollo local):", error);
+        }
+    };
+
+    messaging.onMessage((payload) => {
+        showToast(`🔔 ${payload.notification.body}`);
+    });
 
     // --- NAVEGACIÓN Y HISTORIAL ---
     const updateView = (view) => {
@@ -283,9 +309,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- NOTIFICACIONES ---
     const showToast = (message, isError = false) => {
-        const toast = document.getElementById('toast');
+        let toast = document.getElementById('toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast';
+            document.body.appendChild(toast);
+        }
         toast.textContent = message;
-        toast.className = `fixed bottom-4 right-4 text-white px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+        toast.className = `fixed bottom-4 right-4 z-[100] text-white px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
         toast.classList.remove('hidden', 'translate-y-20');
         setTimeout(() => {
             toast.classList.add('translate-y-20');
@@ -330,17 +361,31 @@ document.addEventListener('DOMContentLoaded', () => {
         lastSnapshotIds = currentIds;
     };
 
+    // --- UTILIDADES DE CÁLCULO ---
+    const getLoanBalance = (loan) => {
+        const totalPaid = (loan.payments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+        const original = parseFloat(loan.amount) || 0;
+        return {
+            original,
+            paid: totalPaid,
+            remaining: original - totalPaid,
+            isFullyPaid: (original - totalPaid) <= 0
+        };
+    };
+
     // --- RENDERIZADO ---
     const renderLoans = (allData) => {
-        loansList.innerHTML = '';
+        const loansList = document.getElementById('active-loans-list');
+        // En realidad, según tu index.html, el contenedor de la lista de préstamos general no estaba definido, 
+        // usaremos una lógica coherente con tu estructura de "Estado de Préstamos" y "Administrar".
         
         // Cobros: Préstamos que yo otorgué (soy el dueño)
         const receivables = allData.filter(l => l.owner === currentUser);
         // Pagos: Préstamos donde yo soy el cliente
         const payables = allData.filter(l => l.client && l.client.split(',').map(s => s.trim()).includes(currentUser));
 
-        const totalReceivables = receivables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
-        const totalPayables = payables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
+        const totalReceivables = receivables.reduce((acc, loan) => acc + getLoanBalance(loan).remaining, 0);
+        const totalPayables = payables.reduce((acc, loan) => acc + getLoanBalance(loan).remaining, 0);
 
         totalAmountDisplay.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(totalReceivables);
         if (totalToPayDisplay) {
@@ -399,11 +444,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.appendChild(receivablesHeader);
 
         receivables.forEach(loan => {
-            const amount = parseFloat(loan.amount);
-            const interest = parseFloat(loan.interest) || 0;
+            const { original, remaining, paid } = getLoanBalance(loan);
             const loanElement = document.createElement('div');
             loanElement.className = 'p-4 border border-slate-800 rounded-xl shadow-sm bg-slate-900';
             
+            const isPaid = remaining <= 0;
             // Resumen de estados para el dueño
             let statusInfo = '';
             if(loan.statuses) {
@@ -414,9 +459,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="font-bold text-lg text-slate-100">${loan.client}</p>
-                        <p class="text-slate-400">Monto: <span class="font-semibold text-blue-400">${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount)}</span></p>
-                        ${interest > 0 ? `<p class="text-slate-400 text-xs italic">Interés: ${interest}%</p>` : ''}
-                        <p class="text-slate-400">Fecha: <span class="font-semibold text-slate-200">${loan.loanDate}</span></p>
+                        <p class="text-slate-400">Saldo: <span class="font-semibold ${isPaid ? 'text-emerald-500' : 'text-blue-400'}">${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(remaining)}</span></p>
+                        ${paid > 0 ? `<p class="text-[10px] text-slate-500 italic">Original: ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(original)}</p>` : ''}
+                        <p class="text-[10px] text-slate-500 mt-1">Fecha: <span class="font-semibold text-slate-200">${loan.loanDate}</span></p>
                         ${loan.details ? `<p class="text-sm text-slate-500 mt-1">Detalles: ${loan.details}</p>` : ''}
                     </div>
                     <div class="flex space-x-2">
@@ -435,43 +480,68 @@ document.addEventListener('DOMContentLoaded', () => {
         brotherDetailTitle.textContent = `Estado con ${brotherName}`;
         brotherLoansList.innerHTML = '';
 
-        // Cobros por hacer a este hermano
-        const myCollections = globalData.filter(l => 
-            l.owner === currentUser && l.client && l.client.includes(brotherName)
-        );
+        const collections = globalData.filter(l => l.owner === currentUser && l.client && l.client.includes(brotherName));
+        const debts = globalData.filter(l => l.owner === brotherName && l.client && l.client.includes(currentUser) && l.statuses && l.statuses[currentUser] === 'accepted');
 
-        // Mis deudas aceptadas de este hermano
-        const myAcceptedDebts = globalData.filter(l => 
-            l.owner === brotherName && 
-            l.client && l.client.includes(currentUser) && 
-            l.statuses && l.statuses[currentUser] === 'accepted'
-        );
-
-        const combined = [...myCollections, ...myAcceptedDebts];
-        if (combined.length === 0) {
+        if (collections.length === 0 && debts.length === 0) {
             brotherLoansList.innerHTML = `<div class="text-center py-20 text-slate-600 font-bold uppercase tracking-widest text-xs">Sin movimientos pendientes</div>`;
             return;
         }
 
-        combined.sort((a,b) => new Date(b.loanDate) - new Date(a.loanDate));
+        const netCollections = collections.reduce((acc, l) => acc + getLoanBalance(l).remaining, 0);
+        const netDebts = debts.reduce((acc, l) => acc + getLoanBalance(l).remaining, 0);
+        const balance = netCollections - netDebts;
 
-        combined.forEach(loan => {
-            const isCollection = loan.owner === currentUser;
-            const card = document.createElement('div');
-            card.className = `p-4 border rounded-xl bg-slate-900 shadow-sm mb-3 ${isCollection ? 'border-blue-500/30' : 'border-rose-500/30'}`;
-            card.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[10px] font-bold uppercase ${isCollection ? 'text-blue-400' : 'text-rose-400'} mb-1">${isCollection ? 'Cobro Pendiente' : 'Deuda Aceptada'}</p>
-                        <p class="font-bold text-slate-100">${isCollection ? loan.client : 'De: ' + loan.owner}</p>
-                        <p class="text-xl font-black ${isCollection ? 'text-white' : 'text-slate-200'} mt-1">$ ${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
-                        <p class="text-[10px] text-slate-500 mt-2 italic">${loan.loanDate}</p>
-                    </div>
-                    ${loan.details ? `<p class="text-[10px] text-slate-500 max-w-[100px] text-right">${loan.details}</p>` : ''}
-                </div>
-            `;
-            brotherLoansList.appendChild(card);
-        });
+        const renderColumn = (list, isCollection) => {
+            const container = document.createElement('div');
+            container.className = 'space-y-3';
+            list.forEach(loan => {
+                const { original, remaining, paid } = getLoanBalance(loan);
+                const card = document.createElement('div');
+                card.className = `p-3 border rounded-xl bg-slate-900 shadow-sm ${isCollection ? 'border-blue-500/30' : 'border-rose-500/30'}`;
+                card.innerHTML = `
+                    <p class="text-[9px] font-bold uppercase ${isCollection ? 'text-blue-400' : 'text-rose-400'} mb-1">${isCollection ? 'Cobro' : 'Deuda'}</p>
+                    <p class="text-white font-bold text-sm">$ ${new Intl.NumberFormat('es-MX').format(remaining)}</p>
+                    ${paid > 0 ? `<p class="text-[9px] text-slate-500 italic">De $${new Intl.NumberFormat('es-MX').format(original)}</p>` : ''}
+                    <p class="text-[9px] text-slate-600 mt-1">${loan.loanDate}</p>
+                `;
+                container.appendChild(card);
+            });
+            return container;
+        };
+
+        // Encabezado de Balance Neto
+        const summaryCard = document.createElement('div');
+        summaryCard.className = `mb-6 p-4 rounded-2xl border ${balance >= 0 ? 'bg-blue-500/10 border-blue-500/30' : 'bg-rose-500/10 border-rose-500/30'} text-center`;
+        summaryCard.innerHTML = `
+            <p class="text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-1">Balance Neto</p>
+            <p class="text-3xl font-black ${balance >= 0 ? 'text-blue-400' : 'text-rose-400'}">
+                ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Math.abs(balance))}
+            </p>
+            <p class="text-[10px] uppercase font-bold mt-1 ${balance >= 0 ? 'text-blue-500/60' : 'text-rose-500/60'}">
+                ${balance >= 0 ? `Te debe ${brotherName}` : `Le debes a ${brotherName}`}
+            </p>
+            <button onclick="liquidateAccounts('${brotherName}')" class="mt-4 w-full py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase rounded-xl transition-all border border-slate-700 active:scale-95">
+                Liquidar Cuentas
+            </button>
+        `;
+
+        brotherLoansList.appendChild(summaryCard);
+
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-2 gap-3';
+        
+        const col1 = document.createElement('div');
+        col1.innerHTML = `<h4 class="text-[10px] uppercase text-blue-500 font-bold mb-2 text-center">Cobros</h4>`;
+        col1.appendChild(renderColumn(collections, true));
+
+        const col2 = document.createElement('div');
+        col2.innerHTML = `<h4 class="text-[10px] uppercase text-rose-500 font-bold mb-2 text-center">Deudas</h4>`;
+        col2.appendChild(renderColumn(debts, false));
+
+        grid.appendChild(col1);
+        grid.appendChild(col2);
+        brotherLoansList.appendChild(grid);
     };
 
     const renderAdminDetail = (brotherName) => {
@@ -490,15 +560,23 @@ document.addEventListener('DOMContentLoaded', () => {
         myCollections.sort((a,b) => new Date(b.loanDate) - new Date(a.loanDate));
 
         myCollections.forEach(loan => {
+            const { original, remaining, paid } = getLoanBalance(loan);
             const isLocked = loan.statuses && Object.values(loan.statuses).includes('accepted');
             const card = document.createElement('div');
             card.className = 'p-6 border border-slate-800 rounded-3xl bg-slate-900 shadow-xl mb-6';
             card.innerHTML = `
                 <div class="mb-4 text-center">
                     <p class="text-blue-400 font-bold uppercase text-xs tracking-widest mb-1">${loan.client}</p>
-                    <p class="text-5xl font-black text-white leading-none">$ ${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
-                    <p class="text-slate-500 text-sm mt-2">${loan.loanDate}</p>
+                    <p class="text-5xl font-black text-white leading-none">$ ${new Intl.NumberFormat('es-MX').format(remaining)}</p>
+                    ${paid > 0 ? `<p class="text-slate-500 text-xs mt-2 uppercase font-bold tracking-widest">Original: $${new Intl.NumberFormat('es-MX').format(original)}</p>` : ''}
+                    <p class="text-slate-600 text-[10px] mt-1">${loan.loanDate}</p>
                 </div>
+                ${paid > 0 ? `
+                    <div class="mb-4 bg-slate-800/30 rounded-xl p-3">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Historial de Abonos</p>
+                        ${loan.payments.map(p => `<div class="flex justify-between text-xs py-1 border-b border-slate-800/50 text-slate-400"><span>${p.date}</span><span class="font-bold text-emerald-500">+$${p.amount}</span></div>`).join('')}
+                    </div>
+                ` : ''}
                 ${loan.details ? `<p class="bg-slate-800/50 p-3 rounded-xl text-slate-300 text-sm mb-4 text-center italic">"${loan.details}"</p>` : ''}
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="editLoan('${loan.id}')" class="bg-amber-600/20 text-amber-500 border border-amber-600/40 py-3 rounded-2xl font-bold uppercase text-xs hover:bg-amber-600 hover:text-white transition-all">
@@ -509,9 +587,70 @@ document.addEventListener('DOMContentLoaded', () => {
                         `<button onclick="deleteLoan('${loan.id}')" class="bg-red-600 text-white py-3 rounded-2xl font-bold uppercase text-xs shadow-lg shadow-red-900/20">Pagado</button>`
                     }
                 </div>
+                ${isLocked ? `
+                    <button onclick="addPaymentPrompt('${loan.id}')" class="w-full mt-3 bg-emerald-600/20 text-emerald-500 border border-emerald-600/40 py-3 rounded-2xl font-bold uppercase text-xs hover:bg-emerald-600 hover:text-white transition-all">
+                        Registrar Abono
+                    </button>
+                ` : ''}
             `;
             adminLoansList.appendChild(card);
         });
+    };
+
+    window.addPaymentPrompt = async (id) => {
+        const loan = globalData.find(l => l.id === id);
+        if (!loan) return;
+        const { remaining } = getLoanBalance(loan);
+
+        const amount = prompt(`Monto del abono (Máx $${remaining}):`);
+        if (!amount || isNaN(amount) || amount <= 0 || amount > remaining) {
+            if (amount) showToast("Monto inválido", true);
+            return;
+        }
+
+        const payments = loan.payments || [];
+        payments.push({ amount: parseFloat(amount), date: new Date().toISOString().split('T')[0], registeredBy: currentUser });
+        await db.collection('loans').doc(id).update({ payments });
+        showToast("Abono registrado correctamente");
+    };
+
+    window.liquidateAccounts = async (brotherName) => {
+        const collections = globalData.filter(l => l.owner === currentUser && l.client && l.client.includes(brotherName));
+        const debts = globalData.filter(l => l.owner === brotherName && l.client && l.client.includes(currentUser) && l.statuses && l.statuses[currentUser] === 'accepted');
+        
+        const allToSettle = [...collections, ...debts];
+        if (allToSettle.length === 0) return;
+
+        const netCollections = collections.reduce((acc, l) => acc + getLoanBalance(l).remaining, 0);
+        const netDebts = debts.reduce((acc, l) => acc + getLoanBalance(l).remaining, 0);
+        const balance = netCollections - netDebts;
+
+        const confirmMsg = balance === 0 
+            ? `El balance es $0.00. ¿Deseas archivar estos ${allToSettle.length} movimientos como liquidados?`
+            : `Se liquidará un balance neto de ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Math.abs(balance))}. ¿Confirmas que se ha realizado el pago externo y quieres saldar estas cuentas?`;
+
+        if (confirm(confirmMsg)) {
+            try {
+                showToast("Liquidando cuentas...");
+                const batch = db.batch();
+                
+                for (const loan of allToSettle) {
+                    if (loan.receiptURL) {
+                        try {
+                            const imageRef = storage.refFromURL(loan.receiptURL);
+                            await imageRef.delete().catch(() => {});
+                        } catch (e) {}
+                    }
+                    batch.delete(db.collection('loans').doc(loan.id));
+                }
+                
+                await batch.commit();
+                showToast("Cuentas liquidadas con éxito");
+            } catch (error) {
+                console.error("Error en liquidación:", error);
+                showToast("Error al liquidar cuentas", true);
+            }
+        }
     };
 
     window.editLoan = (id) => {
@@ -587,7 +726,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 snapshot => {
                     console.log("✅ Datos sincronizados v62.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    checkNewNotifications(globalData);
+                    
+                    // Limpieza inicial de notificaciones
+                    if (lastSnapshotIds.size === 0) lastSnapshotIds = new Set(globalData.map(l => l.id));
+                    else checkNewNotifications(globalData);
+
                     renderLoans(globalData);
                     
                     // Si estamos en la vista de detalle, refrescarla
@@ -692,7 +835,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const loanId = loanIdInput.value;
         const client = document.getElementById('client-name').value;
         const amount = parseFloat(document.getElementById('loan-amount').value);
-        const interest = 0; // Campo eliminado del formulario
         const loanDate = new Date().toISOString().split('T')[0]; // Fecha automática al guardar
         const details = document.getElementById('loan-details').value;
         const receiptFile = document.getElementById('loan-receipt').files[0];
@@ -722,10 +864,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Agregamos el campo 'owner' para saber de quién es el préstamo
-            const loanData = { client, amount, interest, loanDate, details, receiptURL, owner: currentUser, statuses };
+            // Inicializamos 'payments' como array vacío
+            const loanData = { client, amount, loanDate, details, receiptURL, owner: currentUser, statuses, payments: [] };
 
             if (loanId) { // Actualizar
-                await db.collection('loans').doc(loanId).update(loanData);
+                delete loanData.payments; // No resetear pagos al editar
+                await db.collection('loans').doc(loanId).update({ client, amount, details, receiptURL, statuses });
             } else { // Crear
                 await db.collection('loans').add(loanData);
             }
@@ -785,18 +929,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tableData = filteredLoans.map(loan => [
             loan.client,
-            new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(loan.amount),
-            loan.interest ? `${loan.interest}%` : '0%',
+            new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(getLoanBalance(loan).remaining),
             loan.loanDate,
             loan.details || ''
         ]);
         
-        const total = filteredLoans.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
+        const total = filteredLoans.reduce((acc, loan) => acc + getLoanBalance(loan).remaining, 0);
         const formattedTotal = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total);
 
         doc.autoTable({
             startY: 35,
-            head: [['Cliente', 'Monto', 'Int.', 'Fecha', 'Detalles']],
+            head: [['Cliente', 'Monto', 'Fecha', 'Detalles']],
             body: tableData,
             foot: [['', `TOTAL: ${formattedTotal}`, '', '']],
             footStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
