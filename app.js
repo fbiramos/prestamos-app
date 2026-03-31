@@ -406,14 +406,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pagos: Préstamos donde yo soy el cliente
         const payables = allData.filter(l => l.client && l.client.split(',').map(s => s.trim()).includes(currentUser));
 
-        // Cobrador: No sumamos lo que haya sido rechazado por algún deudor
+        // 1. Cobrador (Juan Carlos): No sumamos ABSOLUTAMENTE NADA que tenga un estado 'rejected'
         const totalReceivables = receivables.reduce((acc, loan) => {
-            const hasRejection = Object.values(loan.statuses || {}).includes('rejected');
-            if (hasRejection) return acc;
+            const statuses = Object.values(loan.statuses || {});
+            if (statuses.includes('rejected')) return acc; // Si alguien rechazó, el total no lo cuenta
             return acc + getLoanBalance(loan).remaining;
         }, 0);
 
-        // Deudor: No sumamos deudas que nosotros mismos hemos rechazado
+        // 2. Deudor (Fabio): No sumamos deudas que nosotros mismos marcamos como 'rejected'
         const totalPayables = payables.reduce((acc, loan) => {
             const myStatus = (loan.statuses && loan.statuses[currentUser]) || 'pending';
             if (myStatus === 'rejected') return acc;
@@ -427,17 +427,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         allLoans = receivables; // Mantenemos Cobros para la gestión de la lista y exportación
 
-        // 1. Notificación Interna de Rechazos para el Cobrador (Dueño)
-        const rejectedByOthers = receivables.filter(l => Object.values(l.statuses || {}).includes('rejected'));
+        // 3. Alerta en Dashboard para el Cobrador (Juan Carlos)
+        const rejectedByOthers = receivables.filter(l => {
+            const statuses = Object.values(l.statuses || {});
+            return statuses.includes('rejected');
+        });
+
         if (rejectedByOthers.length > 0) {
             const rejectSection = document.createElement('div');
-            rejectSection.className = 'mb-6';
-            rejectSection.innerHTML = `<h3 class="text-red-500 font-bold text-sm mb-3 uppercase tracking-widest flex items-center gap-2">⚠️ Préstamos Rechazados</h3>`;
+            rejectSection.className = 'mb-6 animate-pulse'; // Efecto visual de urgencia
+            rejectSection.innerHTML = `<h3 class="text-red-500 font-black text-xs mb-3 uppercase tracking-[0.2em] flex items-center gap-2">⚠️ ATENCIÓN: DEUDAS RECHAZADAS</h3>`;
             
             rejectedByOthers.forEach(loan => {
-                const whoRejected = Object.entries(loan.statuses).filter(([n, s]) => s === 'rejected').map(([n]) => n).join(', ');
+                const whoRejected = Object.entries(loan.statuses || {}).filter(([n, s]) => s === 'rejected').map(([n]) => n).join(', ');
                 const card = document.createElement('div');
-                card.className = 'p-4 border border-red-900/30 rounded-xl bg-red-950/20 mb-3 shadow-lg flex justify-between items-center';
+                card.className = 'p-4 border-2 border-red-600 rounded-2xl bg-red-950/40 mb-3 shadow-xl flex justify-between items-center';
                 card.innerHTML = `
                     <div>
                         <p class="text-[10px] text-red-400 uppercase font-bold mb-1">Rechazado por ${whoRejected}</p>
