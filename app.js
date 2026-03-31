@@ -343,22 +343,44 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- SISTEMA DE NOTIFICACIONES LOCALES ---
-    let lastSnapshotIds = new Set();
-    const checkNewNotifications = (allData) => {
-        const currentIds = new Set(allData.map(l => l.id));
-        
-        allData.forEach(loan => {
-            const isNew = !lastSnapshotIds.has(loan.id);
-            const isDebtor = loan.client && loan.client.includes(currentUser);
-            const isPending = loan.statuses && loan.statuses[currentUser] === 'pending';
+    let lastLoansState = new Map(); // Guardamos el estado completo para comparar cambios
 
-            if (isNew && isDebtor && isPending && lastSnapshotIds.size > 0) {
-                if (Notification.permission === 'granted') {
-                    new Notification("RZBRO$: Nueva deuda asignada", { body: `${loan.owner} te ha asignado un préstamo de $${loan.amount}` });
+    const checkNewNotifications = (allData) => {
+        allData.forEach(loan => {
+            const prevState = lastLoansState.get(loan.id);
+            
+            // 1. Caso: Soy deudor y hay un préstamo NUEVO
+            const isDebtor = loan.client && loan.client.includes(currentUser);
+            if (isDebtor && !prevState && lastLoansState.size > 0) {
+                const isPending = loan.statuses && loan.statuses[currentUser] === 'pending';
+                if (isPending && Notification.permission === 'granted') {
+                    new Notification("RZBRO$: Nueva deuda", { 
+                        body: `${loan.owner} te ha asignado un préstamo de $${new Intl.NumberFormat('es-MX').format(loan.amount)}` 
+                    });
                 }
             }
+
+            // 2. Caso: Soy el DUEÑO y alguien cambió el estado (Aceptó o Rechazó)
+            if (loan.owner === currentUser && prevState) {
+                const clients = Object.keys(loan.statuses || {});
+                clients.forEach(client => {
+                    const oldStatus = prevState.statuses ? prevState.statuses[client] : null;
+                    const newStatus = loan.statuses[client];
+
+                    if (oldStatus !== newStatus && newStatus !== 'pending') {
+                        if (Notification.permission === 'granted') {
+                            const title = newStatus === 'accepted' ? "✅ Préstamo Aceptado" : "❌ Préstamo RECHAZADO";
+                            const body = `${client} ha ${newStatus === 'accepted' ? 'aceptado' : 'rechazado'} tu préstamo de $${new Intl.NumberFormat('es-MX').format(loan.amount)}`;
+                            new Notification(`RZBRO$: ${title}`, { body });
+                            showToast(`🔔 ${title}: ${client}`);
+                        }
+                    }
+                });
+            }
         });
-        lastSnapshotIds = currentIds;
+
+        // Actualizamos el mapa de referencia con una copia profunda
+        lastLoansState = new Map(allData.map(l => [l.id, JSON.parse(JSON.stringify(l))]));
     };
 
     // --- UTILIDADES DE CÁLCULO ---
@@ -384,7 +406,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pagos: Préstamos donde yo soy el cliente
         const payables = allData.filter(l => l.client && l.client.split(',').map(s => s.trim()).includes(currentUser));
 
-        const totalReceivables = receivables.reduce((acc, loan) => acc + getLoanBalance(loan).remaining, 0);
+        // Solo sumamos al total lo que NO ha sido rechazado
+        const totalReceivables = receivables.reduce((acc, loan) => {
+            const isFullyRejected = Object.values(loan.statuses || {}).every(s => s === 'rejected');
+            if (isFullyRejected) return acc;
+            return acc + getLoanBalance(loan).remaining;
+        }, 0);
+
         const totalPayables = payables.reduce((acc, loan) => acc + getLoanBalance(loan).remaining, 0);
 
         totalAmountDisplay.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(totalReceivables);
@@ -723,12 +751,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 snapshot => {
                     console.log("✅ Datos sincronizados v62.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    
-                    // Limpieza inicial de notificaciones
-                    if (lastSnapshotIds.size === 0) lastSnapshotIds = new Set(globalData.map(l => l.id));
-                    else checkNewNotifications(globalData);
 
                     renderLoans(globalData);
+                    checkNewNotifications(globalData);
                     
                     // Si estamos en la vista de detalle, refrescarla
                     if (!brotherDetailView.classList.contains('hidden') && history.state && history.state.brotherName) {
