@@ -1,9 +1,9 @@
-const CACHE_NAME = 'prestamos-cache-v52';
+const CACHE_NAME = 'prestamos-cache-v54';
 const urlsToCache = [
   '/',
   '/index.html',
   '/style.css',
-  '/app.js?v=52',
+  '/app.js?v=54',
   '/manifest.json?v=4',
   'https://cdn.tailwindcss.com',
   '/icons/icon-192x192.png?v=4',
