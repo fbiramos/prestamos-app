@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v58 Iniciando...");
+    console.log("🚀 RZBRO$ v59 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -33,11 +33,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Elementos del DOM
     const loanForm = document.getElementById('loan-form');
+    const loansList = document.getElementById('loans-list');
     const loanIdInput = document.getElementById('loan-id');
     const dashboardView = document.getElementById('dashboard-view');
     const formView = document.getElementById('form-view');
     const brotherDetailView = document.getElementById('brother-detail-view');
     const brotherDetailTitle = document.getElementById('brother-detail-title');
+    const brotherLoansList = document.getElementById('brother-loans-list');
+    const adminDetailView = document.getElementById('admin-detail-view');
+    const adminDetailTitle = document.getElementById('admin-detail-title');
+    const adminLoansList = document.getElementById('admin-loans-list');
     const toggleFormBtn = document.getElementById('toggle-form-btn');
     const saveBtn = document.getElementById('save-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
@@ -138,12 +143,16 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboardView.classList.add('hidden');
         formView.classList.add('hidden');
         brotherDetailView.classList.add('hidden');
+        adminDetailView.classList.add('hidden');
 
         if (view === 'form') {
             formView.classList.remove('hidden');
             window.scrollTo(0, 0);
         } else if (view === 'brother-detail') {
             brotherDetailView.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        } else if (view === 'admin-detail') {
+            adminDetailView.classList.remove('hidden');
             window.scrollTo(0, 0);
         } else {
             dashboardView.classList.remove('hidden');
@@ -152,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.goBack = () => {
-        if (!formView.classList.contains('hidden') || !brotherDetailView.classList.contains('hidden')) {
+        if (!formView.classList.contains('hidden') || !brotherDetailView.classList.contains('hidden') || !adminDetailView.classList.contains('hidden')) {
             history.back();
         }
     };
@@ -163,6 +172,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (event.state && event.state.view === 'brother-detail') {
             updateView('brother-detail');
             renderBrotherDetail(event.state.brotherName);
+        } else if (event.state && event.state.view === 'admin-detail') {
+            updateView('admin-detail');
+            renderAdminDetail(event.state.brotherName);
         } else {
             updateView('dashboard');
         }
@@ -174,6 +186,12 @@ document.addEventListener('DOMContentLoaded', () => {
         renderBrotherDetail(name);
     };
 
+    window.viewAdminDetail = (name) => {
+        history.pushState({ view: 'admin-detail', brotherName: name }, '');
+        updateView('admin-detail');
+        renderAdminDetail(name);
+    };
+
     toggleFormBtn.addEventListener('click', () => {
         history.pushState({ view: 'form' }, '');
         updateView('form');
@@ -181,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderBrothersStatus = () => {
         const dashboardContainer = document.getElementById('brothers-status-container');
+        const adminContainer = document.getElementById('admin-brothers-container');
         const formContainer = document.getElementById('form-brothers-container');
         const others = Object.keys(BROTHERS).filter(name => name !== currentUser);
 
@@ -299,14 +318,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- RENDERIZADO ---
     const renderLoans = (allData) => {
+        loansList.innerHTML = '';
+        
         // Cobros: Préstamos que yo otorgué (soy el dueño)
         const receivables = allData.filter(l => l.owner === currentUser);
         // Pagos: Préstamos donde yo soy el cliente
-        const payables = allData.filter(l => 
-            l.client && 
-            l.client.split(',').map(s => s.trim()).includes(currentUser) &&
-            (!l.statuses || l.statuses[currentUser] !== 'rejected')
-        );
+        const payables = allData.filter(l => l.client && l.client.split(',').map(s => s.trim()).includes(currentUser));
 
         const totalReceivables = receivables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
         const totalPayables = payables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
@@ -317,86 +334,200 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         allLoans = receivables; // Mantenemos Cobros para la gestión de la lista y exportación
+
+        if (receivables.length === 0) {
+            loansList.innerHTML = `<div class="text-center py-10 text-slate-500 font-bold uppercase tracking-widest text-sm">
+                ${totalPayables > 0 ? 'SIN PRÉSTAMOS POR COBRAR' : 'NO DEBES NI TE DEBEN'}
+            </div>`;
+            return;
+        }
+
+        // Renderizar Deudas Pendientes (Sección superior de la lista)
+        if (payables.length > 0) {
+            const pendingSection = document.createElement('div');
+            pendingSection.className = 'mb-8';
+            pendingSection.innerHTML = `<h3 class="text-rose-500 font-bold text-sm mb-4 uppercase tracking-widest">Tus Deudas por Revisar</h3>`;
+            
+            payables.forEach(loan => {
+                const status = (loan.statuses && loan.statuses[currentUser]) || 'pending';
+                if (status === 'accepted') return; // Solo mostrar las que requieren atención
+
+                const card = document.createElement('div');
+                card.className = 'p-4 border border-rose-900/50 rounded-xl bg-slate-900 mb-3 shadow-lg';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase font-bold">Acreedor: ${loan.owner}</p>
+                            <p class="text-xl font-bold text-white">$ ${loan.amount}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${status === 'pending' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-500'}">${status === 'reviewing' ? 'En revisión' : 'Pendiente'}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${status === 'pending' ? `
+                            <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-2 rounded-lg text-xs font-bold uppercase">Aceptar</button>
+                            <button onclick="updateDebtStatus('${loan.id}', 'reviewing')" class="bg-slate-800 text-slate-300 py-2 rounded-lg text-xs font-bold uppercase border border-slate-700">En Revisión</button>
+                        ` : status === 'reviewing' ? `
+                            <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-2 rounded-lg text-xs font-bold uppercase">Aceptar</button>
+                            <button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-2 rounded-lg text-xs font-bold uppercase">Rechazar</button>
+                        ` : ''}
+                    </div>
+                    ${status === 'rejected' ? `<p class="text-red-500 text-[10px] mt-2 font-bold italic text-center uppercase">Has rechazado esta deuda</p>` : ''}
+                `;
+                pendingSection.appendChild(card);
+            });
+            if (pendingSection.children.length > 1) loansList.appendChild(pendingSection);
+        }
+
+        // Renderizar Mis Cobros
+        const receivablesHeader = document.createElement('h3');
+        receivablesHeader.className = 'text-blue-500 font-bold text-sm mb-4 uppercase tracking-widest';
+        receivablesHeader.textContent = 'Tus Préstamos Activos';
+        loansList.appendChild(receivablesHeader);
+
+        receivables.forEach(loan => {
+            const amount = parseFloat(loan.amount);
+            const interest = parseFloat(loan.interest) || 0;
+            const loanElement = document.createElement('div');
+            loanElement.className = 'p-4 border border-slate-800 rounded-xl shadow-sm bg-slate-900';
+            
+            // Resumen de estados para el dueño
+            let statusInfo = '';
+            if(loan.statuses) {
+                statusInfo = `<div class="mt-2 flex gap-1 flex-wrap">${Object.entries(loan.statuses).map(([name, st]) => `<span class="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase ${st === 'accepted' ? 'bg-emerald-500/10 text-emerald-500' : st === 'rejected' ? 'bg-red-500/10 text-red-500' : 'bg-slate-800 text-slate-500'}">${name.charAt(0)}: ${st}</span>`).join('')}</div>`;
+            }
+
+            loanElement.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="font-bold text-lg text-slate-100">${loan.client}</p>
+                        <p class="text-slate-400">Monto: <span class="font-semibold text-blue-400">${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount)}</span></p>
+                        ${interest > 0 ? `<p class="text-slate-400 text-xs italic">Interés: ${interest}%</p>` : ''}
+                        <p class="text-slate-400">Fecha: <span class="font-semibold text-slate-200">${loan.loanDate}</span></p>
+                        ${loan.details ? `<p class="text-sm text-slate-500 mt-1">Detalles: ${loan.details}</p>` : ''}
+                    </div>
+                    <div class="flex space-x-2">
+                        <button data-id="${loan.id}" class="edit-btn bg-amber-600/20 text-amber-500 border border-amber-600/30 px-3 py-1 rounded hover:bg-amber-600/30 text-sm transition-colors">Editar</button>
+                        <button data-id="${loan.id}" class="remove-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">PAGADO</button>
+                    </div>
+                </div>
+                ${statusInfo}
+                ${loan.receiptURL ? `<div class="mt-2"><a href="${loan.receiptURL}" target="_blank" class="text-red-500 hover:underline text-sm">Ver Comprobante</a></div>` : ''}
+            `;
+            loansList.appendChild(loanElement);
+        });
     };
 
     const renderBrotherDetail = (brotherName) => {
         brotherDetailTitle.textContent = `Estado con ${brotherName}`;
-        
-        const collectionsCol = document.getElementById('collections-col');
-        const debtsCol = document.getElementById('debts-col');
-        
-        if (!collectionsCol || !debtsCol) return;
-        
-        collectionsCol.innerHTML = '';
-        debtsCol.innerHTML = '';
+        brotherLoansList.innerHTML = '';
 
         // Cobros por hacer a este hermano
-        const myCollections = globalData.filter(l =>
+        const myCollections = globalData.filter(l => 
+            l.owner === currentUser && l.client && l.client.includes(brotherName)
+        );
+
+        // Mis deudas aceptadas de este hermano
+        const myAcceptedDebts = globalData.filter(l => 
+            l.owner === brotherName && 
+            l.client && l.client.includes(currentUser) && 
+            l.statuses && l.statuses[currentUser] === 'accepted'
+        );
+
+        const combined = [...myCollections, ...myAcceptedDebts];
+        if (combined.length === 0) {
+            brotherLoansList.innerHTML = `<div class="text-center py-20 text-slate-600 font-bold uppercase tracking-widest text-xs">Sin movimientos pendientes</div>`;
+            return;
+        }
+
+        combined.sort((a,b) => new Date(b.loanDate) - new Date(a.loanDate));
+
+        combined.forEach(loan => {
+            const isCollection = loan.owner === currentUser;
+            const card = document.createElement('div');
+            card.className = `p-4 border rounded-xl bg-slate-900 shadow-sm mb-3 ${isCollection ? 'border-blue-500/30' : 'border-rose-500/30'}`;
+            card.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase ${isCollection ? 'text-blue-400' : 'text-rose-400'} mb-1">${isCollection ? 'Cobro Pendiente' : 'Deuda Aceptada'}</p>
+                        <p class="font-bold text-slate-100">${isCollection ? loan.client : 'De: ' + loan.owner}</p>
+                        <p class="text-xl font-black ${isCollection ? 'text-white' : 'text-slate-200'} mt-1">$ ${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
+                        <p class="text-[10px] text-slate-500 mt-2 italic">${loan.loanDate}</p>
+                    </div>
+                    ${loan.details ? `<p class="text-[10px] text-slate-500 max-w-[100px] text-right">${loan.details}</p>` : ''}
+                </div>
+            `;
+            brotherLoansList.appendChild(card);
+        });
+    };
+
+    const renderAdminDetail = (brotherName) => {
+        adminDetailTitle.textContent = `Gestionar: ${brotherName}`;
+        adminLoansList.innerHTML = '';
+
+        const myCollections = globalData.filter(l => 
             l.owner === currentUser && l.client && l.client.split(',').map(s => s.trim()).includes(brotherName)
         );
 
-        // Mis deudas con este hermano (Todas: pendientes, aceptadas, etc.)
-        const myDebts = globalData.filter(l =>
-            l.owner === brotherName &&
-            l.client && l.client.split(',').map(s => s.trim()).includes(currentUser) &&
-            (!l.statuses || l.statuses[currentUser] !== 'rejected')
-        );
-
-        // Renderizar Cobros
         if (myCollections.length === 0) {
-            collectionsCol.innerHTML = `<p class="text-[10px] text-slate-700 text-center py-4 italic uppercase">Sin cobros</p>`;
-        } else {
-            myCollections.sort((a, b) => new Date(b.loanDate) - new Date(a.loanDate));
-            myCollections.forEach(loan => {
-                const card = document.createElement('div');
-                card.className = 'p-3 border border-blue-500/20 rounded-xl bg-slate-900/50 mb-2';
-                card.innerHTML = `
-                    <p class="font-bold text-slate-100 text-sm truncate">${loan.client}</p>
-                    <p class="text-lg font-black text-blue-400">$${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
-                    <div class="flex justify-between items-center mt-1">
-                        <p class="text-[8px] text-slate-600 uppercase font-bold">${loan.loanDate}</p>
-                    </div>
-                `;
-                collectionsCol.appendChild(card);
-            });
+            adminLoansList.innerHTML = `<div class="text-center py-20 text-slate-600 font-bold uppercase tracking-widest text-xs">No tienes préstamos otorgados a ${brotherName}</div>`;
+            return;
         }
 
-        // Renderizar Deudas
-        if (myDebts.length === 0) {
-            debtsCol.innerHTML = `<p class="text-[10px] text-slate-700 text-center py-4 italic uppercase">Sin deudas</p>`;
-        } else {
-            myDebts.sort((a, b) => new Date(b.loanDate) - new Date(a.loanDate));
-            myDebts.forEach(loan => {
-                const status = (loan.statuses && loan.statuses[currentUser]) || 'pending';
-                const card = document.createElement('div');
-                card.className = `p-3 border rounded-xl bg-slate-900/50 mb-2 ${status === 'accepted' ? 'border-rose-500/20' : 'border-amber-500/40 shadow-lg shadow-amber-900/10'}`;
-                
-                let actionButtons = '';
-                if (status === 'pending') {
-                    actionButtons = `
-                        <div class="grid grid-cols-2 gap-1 mt-2">
-                            <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-1 rounded text-[8px] font-bold uppercase">Aceptar</button>
-                            <button onclick="updateDebtStatus('${loan.id}', 'reviewing')" class="bg-slate-800 text-slate-300 py-1 rounded text-[8px] font-bold uppercase border border-slate-700">Revisar</button>
-                        </div>`;
-                } else if (status === 'reviewing') {
-                    actionButtons = `
-                        <div class="grid grid-cols-2 gap-1 mt-2">
-                            <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-1 rounded text-[8px] font-bold uppercase">Aceptar</button>
-                            <button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-1 rounded text-[8px] font-bold uppercase">Rechazar</button>
-                        </div>`;
-                }
+        myCollections.sort((a,b) => new Date(b.loanDate) - new Date(a.loanDate));
 
-                card.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <p class="font-bold text-slate-100 text-sm truncate">De: ${loan.owner}</p>
-                        <span class="text-[7px] font-black uppercase px-1 rounded ${status === 'accepted' ? 'text-emerald-500 bg-emerald-500/10' : 'text-amber-500 bg-amber-500/10'}">${status}</span>
-                    </div>
-                    <p class="text-lg font-black ${status === 'accepted' ? 'text-rose-400' : 'text-slate-200'}">$${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
-                    <p class="text-[8px] text-slate-600 uppercase font-bold">${loan.loanDate}</p>
-                    ${actionButtons}
-                `;
-                debtsCol.appendChild(card);
-            });
+        myCollections.forEach(loan => {
+            const card = document.createElement('div');
+            card.className = 'p-6 border border-slate-800 rounded-3xl bg-slate-900 shadow-xl mb-6';
+            card.innerHTML = `
+                <div class="mb-4 text-center">
+                    <p class="text-blue-400 font-bold uppercase text-xs tracking-widest mb-1">${loan.client}</p>
+                    <p class="text-5xl font-black text-white leading-none">$ ${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
+                    <p class="text-slate-500 text-sm mt-2">${loan.loanDate}</p>
+                </div>
+                ${loan.details ? `<p class="bg-slate-800/50 p-3 rounded-xl text-slate-300 text-sm mb-4 text-center italic">"${loan.details}"</p>` : ''}
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="editLoan('${loan.id}')" class="bg-amber-600/20 text-amber-500 border border-amber-600/40 py-3 rounded-2xl font-bold uppercase text-xs hover:bg-amber-600 hover:text-white transition-all">Editar</button>
+                    <button onclick="deleteLoan('${loan.id}')" class="bg-red-600 text-white py-3 rounded-2xl font-bold uppercase text-xs shadow-lg shadow-red-900/20">Pagado</button>
+                </div>
+            `;
+            adminLoansList.appendChild(card);
+        });
+    };
+
+    window.editLoan = (id) => {
+        const loanToEdit = globalData.find(l => l.id === id);
+        if (loanToEdit) {
+            loanIdInput.value = loanToEdit.id;
+            document.getElementById('client-name').value = loanToEdit.client;
+            document.getElementById('loan-amount').value = parseFloat(loanToEdit.amount);
+            document.getElementById('loan-details').value = loanToEdit.details || '';
+            
+            if (loanToEdit.client) {
+                selectedBrothers = loanToEdit.client.split(',').map(s => s.trim());
+                renderBrothersStatus();
+            }
+            saveBtn.textContent = 'Actualizar Préstamo';
+            cancelEditBtn.classList.remove('hidden');
+            
+            history.pushState({ view: 'form' }, '');
+            updateView('form');
+        }
+    };
+
+    window.deleteLoan = async (id) => {
+        if (confirm('¿Seguro que quieres marcar este préstamo como pagado?')) {
+            try {
+                const loan = globalData.find(l => l.id === id);
+                if (loan && loan.receiptURL) {
+                    const imageRef = storage.refFromURL(loan.receiptURL);
+                    await imageRef.delete().catch(e => console.warn("Error Storage:", e));
+                }
+                await db.collection('loans').doc(id).delete();
+                showToast("Préstamo marcado como pagado");
+            } catch (error) {
+                console.error("Error borrando:", error);
+                showToast("Error al procesar", true);
+            }
         }
     };
 
@@ -405,15 +536,21 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v58 para:", currentUser);
+        console.log("📡 Conectando Firestore para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
+        loansList.innerHTML = `
+            <div class="flex justify-center items-center p-8 text-slate-500">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
+                <span>Conectando v59...</span>
+            </div>`;
+
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v58.");
+                    console.log("✅ Datos sincronizados v59.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     checkNewNotifications(globalData);
                     renderLoans(globalData);
@@ -421,6 +558,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Si estamos en la vista de detalle, refrescarla
                     if (!brotherDetailView.classList.contains('hidden') && history.state && history.state.brotherName) {
                         renderBrotherDetail(history.state.brotherName);
+                    }
+                    // Si estamos en administración, refrescar
+                    if (!adminDetailView.classList.contains('hidden') && history.state && history.state.brotherName) {
+                        renderAdminDetail(history.state.brotherName);
                     }
                 },
                 error => {
@@ -567,6 +708,50 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             saveBtn.disabled = false;
             history.back();
+        }
+    });
+
+    // --- MODO EDICIÓN Y BORRADO ---
+    loansList.addEventListener('click', (e) => {
+        const loanId = e.target.getAttribute('data-id');
+        if (!loanId) return;
+
+        if (e.target.classList.contains('edit-btn')) {
+            const loanToEdit = allLoans.find(loan => loan.id === loanId);
+            if (loanToEdit) {
+                loanIdInput.value = loanToEdit.id;
+                document.getElementById('client-name').value = loanToEdit.client;
+                document.getElementById('loan-amount').value = parseFloat(loanToEdit.amount);
+                document.getElementById('loan-details').value = loanToEdit.details || '';
+                
+                // Cargar selección de hermanos
+                if (loanToEdit.client) {
+                    selectedBrothers = loanToEdit.client.split(',').map(s => s.trim());
+                    renderBrothersStatus(); // Refrescar visualmente los botones en el form
+                }
+                saveBtn.textContent = 'Actualizar Préstamo';
+                cancelEditBtn.classList.remove('hidden');
+                
+                history.pushState({ view: 'form' }, '');
+                updateView('form');
+            }
+        } else if (e.target.classList.contains('remove-btn')) {
+            if (confirm('¿Seguro que quieres marcar este préstamo como pagado?')) {
+                const loanToDelete = allLoans.find(loan => loan.id === loanId);
+
+                // Si el préstamo tiene una imagen, la borramos de Storage
+                if (loanToDelete && loanToDelete.receiptURL) {
+                    const imageRef = storage.refFromURL(loanToDelete.receiptURL);
+                    imageRef.delete().catch(error => {
+                        console.error("Error al eliminar el archivo físico:", error);
+                    });
+                }
+
+                // Borramos el registro de la base de datos
+                db.collection('loans').doc(loanId).delete()
+                    .then(() => showToast("Préstamo marcado como pagado"))
+                    .catch(error => console.error("Error borrando el registro: ", error));
+            }
         }
     });
 
