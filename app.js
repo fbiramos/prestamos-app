@@ -517,10 +517,21 @@ document.addEventListener('DOMContentLoaded', () => {
         myCollections.forEach(loan => {
             const { original, remaining, paid } = getLoanBalance(loan);
             const isLocked = loan.statuses && Object.values(loan.statuses).includes('accepted');
+            
+            // Obtener el estado específico de este hermano (brotherName)
+            const status = (loan.statuses && loan.statuses[brotherName]) || 'pending';
+            let statusBadge = '';
+            if (status === 'rejected') {
+                statusBadge = `<p class="text-red-500 font-bold text-[10px] uppercase tracking-widest mb-2 animate-pulse">⚠️ Préstamo Rechazado</p>`;
+            } else if (status === 'pending') {
+                statusBadge = `<p class="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-2">⏳ Pendiente de revisión</p>`;
+            }
+
             const card = document.createElement('div');
             card.className = 'p-6 border border-slate-800 rounded-3xl bg-slate-900 shadow-xl mb-6';
             card.innerHTML = `
                 <div class="mb-4 text-center">
+                    ${statusBadge}
                     <p class="text-blue-400 font-bold uppercase text-xs tracking-widest mb-1">${loan.client}</p>
                     <p class="text-5xl font-black text-white leading-none">$ ${new Intl.NumberFormat('es-MX').format(remaining)}</p>
                     ${paid > 0 ? `<p class="text-slate-500 text-xs mt-2 uppercase font-bold tracking-widest">Original: $${new Intl.NumberFormat('es-MX').format(original)}</p>` : ''}
