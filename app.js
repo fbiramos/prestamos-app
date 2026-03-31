@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v49 Iniciando...");
+    console.log("🚀 RZBRO$ v50 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -121,6 +121,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- PERMISOS DE NOTIFICACIÓN ---
+    const requestNotificationPermission = async () => {
+        if ('Notification' in window) {
+            if (Notification.permission !== 'granted') {
+                await Notification.requestPermission();
+            }
+        }
+    };
+
     // --- NAVEGACIÓN Y HISTORIAL ---
     const updateView = (view) => {
         if (view === 'form') {
@@ -212,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initFirestoreListener();
         renderBrothersStatus();
         history.replaceState({ view: 'dashboard' }, '');
+        requestNotificationPermission();
         showToast(`Bienvenido ${userName}`);
     };
 
@@ -232,6 +242,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     };
 
+    // --- ACCIONES DE DEUDA ---
+    window.updateDebtStatus = async (loanId, newStatus) => {
+        try {
+            const loanRef = db.collection('loans').doc(loanId);
+            const doc = await loanRef.get();
+            if (!doc.exists) return;
+
+            const statuses = doc.data().statuses || {};
+            statuses[currentUser] = newStatus;
+
+            await loanRef.update({ statuses });
+            showToast(`Estado actualizado: ${newStatus}`);
+        } catch (error) {
+            console.error("Error actualizando estado:", error);
+            showToast("Error al procesar", true);
+        }
+    };
+
+    // --- SISTEMA DE NOTIFICACIONES LOCALES ---
+    let lastSnapshotIds = new Set();
+    const checkNewNotifications = (allData) => {
+        const currentIds = new Set(allData.map(l => l.id));
+        
+        allData.forEach(loan => {
+            const isNew = !lastSnapshotIds.has(loan.id);
+            const isDebtor = loan.client && loan.client.includes(currentUser);
+            const isPending = loan.statuses && loan.statuses[currentUser] === 'pending';
+
+            if (isNew && isDebtor && isPending && lastSnapshotIds.size > 0) {
+                if (Notification.permission === 'granted') {
+                    new Notification("RZBRO$: Nueva deuda asignada", { body: `${loan.owner} te ha asignado un préstamo de $${loan.amount}` });
+                }
+            }
+        });
+        lastSnapshotIds = currentIds;
+    };
+
     // --- RENDERIZADO ---
     const renderLoans = (allData) => {
         loansList.innerHTML = '';
@@ -239,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cobros: Préstamos que yo otorgué (soy el dueño)
         const receivables = allData.filter(l => l.owner === currentUser);
         // Pagos: Préstamos donde yo soy el cliente
-        const payables = allData.filter(l => l.client && l.client.toLowerCase().split(',').map(s => s.trim()).includes(currentUser.toLowerCase()));
+        const payables = allData.filter(l => l.client && l.client.split(',').map(s => s.trim()).includes(currentUser));
 
         const totalReceivables = receivables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
         const totalPayables = payables.reduce((acc, loan) => acc + (parseFloat(loan.amount) || 0), 0);
@@ -258,11 +305,60 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Renderizar Deudas Pendientes (Sección superior de la lista)
+        if (payables.length > 0) {
+            const pendingSection = document.createElement('div');
+            pendingSection.className = 'mb-8';
+            pendingSection.innerHTML = `<h3 class="text-rose-500 font-bold text-sm mb-4 uppercase tracking-widest">Tus Deudas por Revisar</h3>`;
+            
+            payables.forEach(loan => {
+                const status = (loan.statuses && loan.statuses[currentUser]) || 'pending';
+                if (status === 'accepted') return; // Solo mostrar las que requieren atención
+
+                const card = document.createElement('div');
+                card.className = 'p-4 border border-rose-900/50 rounded-xl bg-slate-900 mb-3 shadow-lg';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase font-bold">Acreedor: ${loan.owner}</p>
+                            <p class="text-xl font-bold text-white">$ ${loan.amount}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${status === 'pending' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-500'}">${status === 'reviewing' ? 'En revisión' : 'Pendiente'}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${status === 'pending' ? `
+                            <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-2 rounded-lg text-xs font-bold uppercase">Aceptar</button>
+                            <button onclick="updateDebtStatus('${loan.id}', 'reviewing')" class="bg-slate-800 text-slate-300 py-2 rounded-lg text-xs font-bold uppercase border border-slate-700">En Revisión</button>
+                        ` : status === 'reviewing' ? `
+                            <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-2 rounded-lg text-xs font-bold uppercase">Aceptar</button>
+                            <button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-2 rounded-lg text-xs font-bold uppercase">Rechazar</button>
+                        ` : ''}
+                    </div>
+                    ${status === 'rejected' ? `<p class="text-red-500 text-[10px] mt-2 font-bold italic text-center uppercase">Has rechazado esta deuda</p>` : ''}
+                `;
+                pendingSection.appendChild(card);
+            });
+            if (pendingSection.children.length > 1) loansList.appendChild(pendingSection);
+        }
+
+        // Renderizar Mis Cobros
+        const receivablesHeader = document.createElement('h3');
+        receivablesHeader.className = 'text-blue-500 font-bold text-sm mb-4 uppercase tracking-widest';
+        receivablesHeader.textContent = 'Tus Préstamos Activos';
+        loansList.appendChild(receivablesHeader);
+
         receivables.forEach(loan => {
             const amount = parseFloat(loan.amount);
             const interest = parseFloat(loan.interest) || 0;
             const loanElement = document.createElement('div');
             loanElement.className = 'p-4 border border-slate-800 rounded-xl shadow-sm bg-slate-900';
+            
+            // Resumen de estados para el dueño
+            let statusInfo = '';
+            if(loan.statuses) {
+                statusInfo = `<div class="mt-2 flex gap-1 flex-wrap">${Object.entries(loan.statuses).map(([name, st]) => `<span class="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase ${st === 'accepted' ? 'bg-emerald-500/10 text-emerald-500' : st === 'rejected' ? 'bg-red-500/10 text-red-500' : 'bg-slate-800 text-slate-500'}">${name.charAt(0)}: ${st}</span>`).join('')}</div>`;
+            }
+
             loanElement.innerHTML = `
                 <div class="flex justify-between items-start">
                     <div>
@@ -277,6 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button data-id="${loan.id}" class="remove-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">PAGADO</button>
                     </div>
                 </div>
+                ${statusInfo}
                 ${loan.receiptURL ? `<div class="mt-2"><a href="${loan.receiptURL}" target="_blank" class="text-red-500 hover:underline text-sm">Ver Comprobante</a></div>` : ''}
             `;
             loansList.appendChild(loanElement);
@@ -295,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v49...</span>
+                <span>Conectando v50...</span>
             </div>`;
 
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
@@ -304,6 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 snapshot => {
                     console.log("✅ Datos sincronizados.");
                     const allData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    checkNewNotifications(allData);
                     renderLoans(allData);
                 },
                 error => {
@@ -428,8 +526,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 receiptURL = await fileRef.getDownloadURL();
             }
 
+            // Inicializar estados para deudores
+            const statuses = {};
+            selectedBrothers.forEach(name => {
+                statuses[name] = 'pending';
+            });
+
             // Agregamos el campo 'owner' para saber de quién es el préstamo
-            const loanData = { client, amount, interest, loanDate, details, receiptURL, owner: currentUser };
+            const loanData = { client, amount, interest, loanDate, details, receiptURL, owner: currentUser, statuses };
 
             if (loanId) { // Actualizar
                 await db.collection('loans').doc(loanId).update(loanData);
@@ -553,6 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initFirestoreListener();
         renderBrothersStatus();
         history.replaceState({ view: 'dashboard' }, '');
+        requestNotificationPermission();
     } else {
         console.log("No hay sesión activa.");
     }
