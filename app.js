@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v59 Iniciando...");
+    console.log("🚀 RZBRO$ v60 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -215,6 +215,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             btn.onclick = () => window.viewBrotherDetail(name);
                 dashboardContainer.appendChild(btn);
+            });
+        }
+
+        // Renderizar en Administrar Préstamos
+        if (adminContainer) {
+            adminContainer.innerHTML = '';
+            others.forEach(name => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-slate-900 border border-slate-700 p-2 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center justify-center sm:justify-between hover:border-amber-500 hover:bg-slate-800 transition-all group active:scale-95 shadow-lg shadow-black/20';
+                btn.innerHTML = `
+                    <span class="font-bold text-slate-200 text-xl sm:text-3xl text-center">${name}</span>
+                    <span class="text-amber-500 group-hover:translate-x-1 transition-transform hidden sm:inline">⚙️</span>
+                `;
+                btn.onclick = () => window.viewAdminDetail(name);
+                adminContainer.appendChild(btn);
             });
         }
 
@@ -543,14 +558,14 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v59...</span>
+                <span>Conectando v60...</span>
             </div>`;
 
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v59.");
+                    console.log("✅ Datos sincronizados v60.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     checkNewNotifications(globalData);
                     renderLoans(globalData);
