@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v61 Iniciando...");
+    console.log("🚀 RZBRO$ v62 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -490,6 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
         myCollections.sort((a,b) => new Date(b.loanDate) - new Date(a.loanDate));
 
         myCollections.forEach(loan => {
+            const isLocked = loan.statuses && Object.values(loan.statuses).includes('accepted');
             const card = document.createElement('div');
             card.className = 'p-6 border border-slate-800 rounded-3xl bg-slate-900 shadow-xl mb-6';
             card.innerHTML = `
@@ -500,8 +501,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 ${loan.details ? `<p class="bg-slate-800/50 p-3 rounded-xl text-slate-300 text-sm mb-4 text-center italic">"${loan.details}"</p>` : ''}
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="editLoan('${loan.id}')" class="bg-amber-600/20 text-amber-500 border border-amber-600/40 py-3 rounded-2xl font-bold uppercase text-xs hover:bg-amber-600 hover:text-white transition-all">Editar</button>
-                    <button onclick="deleteLoan('${loan.id}')" class="bg-red-600 text-white py-3 rounded-2xl font-bold uppercase text-xs shadow-lg shadow-red-900/20">Pagado</button>
+                    <button onclick="editLoan('${loan.id}')" class="bg-amber-600/20 text-amber-500 border border-amber-600/40 py-3 rounded-2xl font-bold uppercase text-xs hover:bg-amber-600 hover:text-white transition-all">
+                        ${isLocked ? 'Ver' : 'Editar'}
+                    </button>
+                    ${isLocked ? 
+                        `<button disabled class="bg-slate-800 text-slate-600 py-3 rounded-2xl font-bold uppercase text-xs cursor-not-allowed opacity-50">Aceptado</button>` :
+                        `<button onclick="deleteLoan('${loan.id}')" class="bg-red-600 text-white py-3 rounded-2xl font-bold uppercase text-xs shadow-lg shadow-red-900/20">Pagado</button>`
+                    }
                 </div>
             `;
             adminLoansList.appendChild(card);
@@ -511,17 +517,30 @@ document.addEventListener('DOMContentLoaded', () => {
     window.editLoan = (id) => {
         const loanToEdit = globalData.find(l => l.id === id);
         if (loanToEdit) {
+            const isLocked = loanToEdit.statuses && Object.values(loanToEdit.statuses).includes('accepted');
+            
             loanIdInput.value = loanToEdit.id;
             document.getElementById('client-name').value = loanToEdit.client;
             document.getElementById('loan-amount').value = parseFloat(loanToEdit.amount);
             document.getElementById('loan-details').value = loanToEdit.details || '';
             
+            // Bloquear campos si está aceptada
+            const formInputs = loanForm.querySelectorAll('input, textarea');
+            formInputs.forEach(input => {
+                if(input.id !== 'loan-id') input.disabled = isLocked;
+            });
+            saveBtn.classList.toggle('hidden', isLocked);
+            document.getElementById('start-camera-btn').classList.toggle('hidden', isLocked);
+            document.getElementById('form-brothers-container').classList.toggle('pointer-events-none', isLocked);
+            document.getElementById('form-brothers-container').classList.toggle('opacity-50', isLocked);
+
             if (loanToEdit.client) {
                 selectedBrothers = loanToEdit.client.split(',').map(s => s.trim());
                 renderBrothersStatus();
             }
-            saveBtn.textContent = 'Actualizar Préstamo';
+            saveBtn.textContent = isLocked ? 'Ver Detalle' : 'Actualizar Préstamo';
             cancelEditBtn.classList.remove('hidden');
+            cancelEditBtn.textContent = isLocked ? 'Cerrar' : 'Cancelar Edición';
             
             history.pushState({ view: 'form' }, '');
             updateView('form');
@@ -529,9 +548,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteLoan = async (id) => {
+        const loan = globalData.find(l => l.id === id);
+        if (!loan) return;
+
+        const isLocked = loan.statuses && Object.values(loan.statuses).includes('accepted');
+        if (isLocked) {
+            showToast("No se puede eliminar una deuda aceptada", true);
+            return;
+        }
+
         if (confirm('¿Seguro que quieres marcar este préstamo como pagado?')) {
             try {
-                const loan = globalData.find(l => l.id === id);
                 if (loan && loan.receiptURL) {
                     const imageRef = storage.refFromURL(loan.receiptURL);
                     await imageRef.delete().catch(e => console.warn("Error Storage:", e));
@@ -558,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v60.");
+                    console.log("✅ Datos sincronizados v62.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     checkNewNotifications(globalData);
                     renderLoans(globalData);
@@ -718,7 +745,15 @@ document.addEventListener('DOMContentLoaded', () => {
         loanIdInput.value = '';
         loanReceiptInput.value = '';
         saveBtn.textContent = 'Guardar Préstamo';
+        saveBtn.classList.remove('hidden');
+        document.getElementById('start-camera-btn').classList.remove('hidden');
         cancelEditBtn.classList.add('hidden');
+        cancelEditBtn.textContent = 'Cancelar Edición';
+        
+        const formInputs = loanForm.querySelectorAll('input, textarea');
+        formInputs.forEach(input => input.disabled = false);
+        document.getElementById('form-brothers-container').classList.remove('pointer-events-none', 'opacity-50');
+
         selectedBrothers = [];
         renderBrothersStatus();
     };
