@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v39 Iniciando...");
+    console.log("🚀 RZBRO$ v40 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = document.createElement('button');
             btn.className = 'bg-slate-900 border border-slate-800 p-2 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center justify-center sm:justify-between hover:border-blue-500 transition-all group active:scale-95';
             btn.innerHTML = `
-                <span class="font-bold text-slate-200 text-[10px] sm:text-base text-center">${name}</span>
+                <span class="font-bold text-slate-200 text-xl sm:text-3xl text-center">${name}</span>
                 <span class="text-blue-500 group-hover:translate-x-1 transition-transform hidden sm:inline">→</span>
             `;
             container.appendChild(btn);
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v39...</span>
+                <span>Conectando v40...</span>
             </div>`;
 
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
