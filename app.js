@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v52 Iniciando...");
+    console.log("🚀 RZBRO$ v53 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -37,6 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const loanIdInput = document.getElementById('loan-id');
     const dashboardView = document.getElementById('dashboard-view');
     const formView = document.getElementById('form-view');
+    const brotherDetailView = document.getElementById('brother-detail-view');
+    const brotherDetailTitle = document.getElementById('brother-detail-title');
+    const brotherLoansList = document.getElementById('brother-loans-list');
     const toggleFormBtn = document.getElementById('toggle-form-btn');
     const saveBtn = document.getElementById('save-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
@@ -56,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let tempPin = '';
     let selectedBrothers = [];
 
+    let globalData = [];
     // Estado de la app
     let allLoans = [];
     let unsubscribe = null; // Para limpiar el listener de Firestore
@@ -133,19 +137,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- NAVEGACIÓN Y HISTORIAL ---
     const updateView = (view) => {
+        dashboardView.classList.add('hidden');
+        formView.classList.add('hidden');
+        brotherDetailView.classList.add('hidden');
+
         if (view === 'form') {
-            dashboardView.classList.add('hidden');
             formView.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        } else if (view === 'brother-detail') {
+            brotherDetailView.classList.remove('hidden');
             window.scrollTo(0, 0);
         } else {
             dashboardView.classList.remove('hidden');
-            formView.classList.add('hidden');
             clearForm();
         }
     };
 
     window.goBack = () => {
-        if (!formView.classList.contains('hidden')) {
+        if (!formView.classList.contains('hidden') || !brotherDetailView.classList.contains('hidden')) {
             history.back();
         }
     };
@@ -153,10 +162,19 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('popstate', (event) => {
         if (event.state && event.state.view === 'form') {
             updateView('form');
+        } else if (event.state && event.state.view === 'brother-detail') {
+            updateView('brother-detail');
+            renderBrotherDetail(event.state.brotherName);
         } else {
             updateView('dashboard');
         }
     });
+
+    window.viewBrotherDetail = (name) => {
+        history.pushState({ view: 'brother-detail', brotherName: name }, '');
+        updateView('brother-detail');
+        renderBrotherDetail(name);
+    };
 
     toggleFormBtn.addEventListener('click', () => {
         history.pushState({ view: 'form' }, '');
@@ -178,6 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="font-bold text-slate-200 text-xl sm:text-3xl text-center">${name}</span>
                     <span class="text-blue-500 group-hover:translate-x-1 transition-transform hidden sm:inline">→</span>
                 `;
+            btn.onclick = () => window.viewBrotherDetail(name);
                 dashboardContainer.appendChild(btn);
             });
         }
@@ -381,6 +400,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const renderBrotherDetail = (brotherName) => {
+        brotherDetailTitle.textContent = `Estado con ${brotherName}`;
+        brotherLoansList.innerHTML = '';
+
+        // Cobros por hacer a este hermano
+        const myCollections = globalData.filter(l => 
+            l.owner === currentUser && l.client && l.client.includes(brotherName)
+        );
+
+        // Mis deudas aceptadas de este hermano
+        const myAcceptedDebts = globalData.filter(l => 
+            l.owner === brotherName && 
+            l.client && l.client.includes(currentUser) && 
+            l.statuses && l.statuses[currentUser] === 'accepted'
+        );
+
+        const combined = [...myCollections, ...myAcceptedDebts];
+        if (combined.length === 0) {
+            brotherLoansList.innerHTML = `<div class="text-center py-20 text-slate-600 font-bold uppercase tracking-widest text-xs">Sin movimientos pendientes</div>`;
+            return;
+        }
+
+        combined.sort((a,b) => new Date(b.loanDate) - new Date(a.loanDate));
+
+        combined.forEach(loan => {
+            const isCollection = loan.owner === currentUser;
+            const card = document.createElement('div');
+            card.className = `p-4 border rounded-xl bg-slate-900 shadow-sm mb-3 ${isCollection ? 'border-blue-500/30' : 'border-rose-500/30'}`;
+            card.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase ${isCollection ? 'text-blue-400' : 'text-rose-400'} mb-1">${isCollection ? 'Cobro Pendiente' : 'Deuda Aceptada'}</p>
+                        <p class="font-bold text-slate-100">${isCollection ? loan.client : 'De: ' + loan.owner}</p>
+                        <p class="text-xl font-black ${isCollection ? 'text-white' : 'text-slate-200'} mt-1">$ ${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
+                        <p class="text-[10px] text-slate-500 mt-2 italic">${loan.loanDate}</p>
+                    </div>
+                    ${loan.details ? `<p class="text-[10px] text-slate-500 max-w-[100px] text-right">${loan.details}</p>` : ''}
+                </div>
+            `;
+            brotherLoansList.appendChild(card);
+        });
+    };
+
     const initFirestoreListener = () => {
         if (!currentUser) {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
@@ -393,7 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v52...</span>
+                <span>Conectando v53...</span>
             </div>`;
 
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
@@ -401,9 +463,14 @@ document.addEventListener('DOMContentLoaded', () => {
             .onSnapshot(
                 snapshot => {
                     console.log("✅ Datos sincronizados.");
-                    const allData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    checkNewNotifications(allData);
-                    renderLoans(allData);
+                    globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    checkNewNotifications(globalData);
+                    renderLoans(globalData);
+                    
+                    // Si estamos en la vista de detalle, refrescarla
+                    if (!brotherDetailView.classList.contains('hidden') && history.state && history.state.brotherName) {
+                        renderBrotherDetail(history.state.brotherName);
+                    }
                 },
                 error => {
                     console.error("❌ ERROR CRÍTICO:", error.code, error.message);
