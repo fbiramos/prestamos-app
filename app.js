@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v41 Iniciando...");
+    console.log("🚀 RZBRO$ v42 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const loanForm = document.getElementById('loan-form');
     const loansList = document.getElementById('loans-list');
     const loanIdInput = document.getElementById('loan-id');
+    const loanFormContainer = document.getElementById('loan-form-container');
+    const toggleFormBtn = document.getElementById('toggle-form-btn');
     const saveBtn = document.getElementById('save-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
     const totalAmountDisplay = document.getElementById('total-amount');
@@ -116,6 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 pinInput.value = '';
             }
         }
+    });
+
+    // Toggle del formulario
+    toggleFormBtn.addEventListener('click', () => {
+        loanFormContainer.classList.toggle('hidden');
     });
 
     const renderBrothersStatus = () => {
@@ -227,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v41...</span>
+                <span>Conectando v42...</span>
             </div>`;
 
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
@@ -364,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection('loans').add(loanData);
             }
 
+            loanFormContainer.classList.add('hidden');
             showToast(loanId ? "Préstamo actualizado" : "Préstamo guardado correctamente");
         } catch (error) {
             console.error("Error guardando el préstamo: ", error);
@@ -389,6 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('loan-date').value = loanToEdit.loanDate; // Populate date field
                 document.getElementById('loan-details').value = loanToEdit.details || '';
                 
+                loanFormContainer.classList.remove('hidden');
                 saveBtn.textContent = 'Actualizar Préstamo';
                 cancelEditBtn.classList.remove('hidden');
                 window.scrollTo(0, 0);
@@ -421,6 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loanReceiptInput.value = ''; // Limpiar el input de archivo físicamente
         saveBtn.textContent = 'Guardar Préstamo';
         cancelEditBtn.classList.add('hidden');
+        loanFormContainer.classList.add('hidden');
     };
 
     cancelEditBtn.addEventListener('click', resetForm);

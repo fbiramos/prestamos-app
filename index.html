@@ -66,9 +66,15 @@
         </div>
     </div>
 
+    <div class="container mx-auto p-4">
+        <button id="toggle-form-btn" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-bold shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 active:scale-95 transition-all">
+            <span class="text-2xl">➕</span> NUEVO PRÉSTAMO
+        </button>
+    </div>
+
     <main class="container mx-auto p-4">
         <!-- Formulario para agregar préstamos -->
-        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-lg mb-6">
+        <div id="loan-form-container" class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-lg mb-6 hidden">
             <h2 class="text-xl font-bold mb-4 text-white">Nuevo Préstamo</h2>
             <form id="loan-form">
                 <input type="hidden" id="loan-id">
@@ -134,6 +140,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-storage-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <script src="app.js?v=41"></script>
+    <script src="app.js?v=42"></script>
 </body>
 </html>
