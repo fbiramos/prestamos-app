@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v55 Iniciando...");
+    console.log("🚀 RZBRO$ v56 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -327,15 +327,14 @@ document.addEventListener('DOMContentLoaded', () => {
         debtsCol.innerHTML = '';
 
         // Cobros por hacer a este hermano
-        const myCollections = globalData.filter(l => 
-            l.owner === currentUser && l.client && l.client.includes(brotherName)
+        const myCollections = globalData.filter(l =>
+            l.owner === currentUser && l.client && l.client.split(',').map(s => s.trim()).includes(brotherName)
         );
 
-        // Mis deudas aceptadas de este hermano
-        const myAcceptedDebts = globalData.filter(l => 
-            l.owner === brotherName && 
-            l.client && l.client.includes(currentUser) && 
-            l.statuses && l.statuses[currentUser] === 'accepted'
+        // Mis deudas con este hermano (Todas: pendientes, aceptadas, etc.)
+        const myDebts = globalData.filter(l =>
+            l.owner === brotherName &&
+            l.client && l.client.split(',').map(s => s.trim()).includes(currentUser)
         );
 
         // Renderizar Cobros
@@ -358,17 +357,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Renderizar Deudas
-        if (myAcceptedDebts.length === 0) {
+        if (myDebts.length === 0) {
             debtsCol.innerHTML = `<p class="text-[10px] text-slate-700 text-center py-4 italic uppercase">Sin deudas</p>`;
         } else {
-            myAcceptedDebts.sort((a, b) => new Date(b.loanDate) - new Date(a.loanDate));
-            myAcceptedDebts.forEach(loan => {
+            myDebts.sort((a, b) => new Date(b.loanDate) - new Date(a.loanDate));
+            myDebts.forEach(loan => {
+                const status = (loan.statuses && loan.statuses[currentUser]) || 'pending';
                 const card = document.createElement('div');
-                card.className = 'p-3 border border-rose-500/20 rounded-xl bg-slate-900/50 mb-2';
+                card.className = `p-3 border rounded-xl bg-slate-900/50 mb-2 ${status === 'accepted' ? 'border-rose-500/20' : 'border-amber-500/40 shadow-lg shadow-amber-900/10'}`;
+                
+                let actionButtons = '';
+                if (status === 'pending') {
+                    actionButtons = `
+                        <div class="grid grid-cols-2 gap-1 mt-2">
+                            <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-1 rounded text-[8px] font-bold uppercase">Aceptar</button>
+                            <button onclick="updateDebtStatus('${loan.id}', 'reviewing')" class="bg-slate-800 text-slate-300 py-1 rounded text-[8px] font-bold uppercase border border-slate-700">Revisar</button>
+                        </div>`;
+                } else if (status === 'reviewing') {
+                    actionButtons = `
+                        <div class="grid grid-cols-2 gap-1 mt-2">
+                            <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-1 rounded text-[8px] font-bold uppercase">Aceptar</button>
+                            <button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-1 rounded text-[8px] font-bold uppercase">Rechazar</button>
+                        </div>`;
+                }
+
                 card.innerHTML = `
-                    <p class="font-bold text-slate-100 text-sm truncate">De: ${loan.owner}</p>
-                    <p class="text-lg font-black text-rose-400">$${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
-                    <p class="text-[8px] text-slate-600 uppercase font-bold mt-1">${loan.loanDate}</p>
+                    <div class="flex justify-between items-start">
+                        <p class="font-bold text-slate-100 text-sm truncate">De: ${loan.owner}</p>
+                        <span class="text-[7px] font-black uppercase px-1 rounded ${status === 'accepted' ? 'text-emerald-500 bg-emerald-500/10' : 'text-amber-500 bg-amber-500/10'}">${status}</span>
+                    </div>
+                    <p class="text-lg font-black ${status === 'accepted' ? 'text-rose-400' : 'text-slate-200'}">$${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
+                    <p class="text-[8px] text-slate-600 uppercase font-bold">${loan.loanDate}</p>
+                    ${actionButtons}
                 `;
                 debtsCol.appendChild(card);
             });
@@ -380,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore para:", currentUser);
+        console.log("📡 Conectando Firestore v56 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -388,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v55.");
+                    console.log("✅ Datos sincronizados v56.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     checkNewNotifications(globalData);
                     renderLoans(globalData);
