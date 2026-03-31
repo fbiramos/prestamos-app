@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v46 Iniciando...");
+    console.log("🚀 RZBRO$ v47 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loansList.innerHTML = `
             <div class="flex justify-center items-center p-8 text-slate-500">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                <span>Conectando v46...</span>
+                <span>Conectando v47...</span>
             </div>`;
 
         // Obtenemos todos los datos para filtrar cobros y pagos localmente
@@ -390,10 +390,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const loanId = loanIdInput.value;
         const client = document.getElementById('client-name').value;
         const amount = parseFloat(document.getElementById('loan-amount').value);
-        const interest = parseFloat(document.getElementById('loan-interest').value) || 0;
-        const loanDate = document.getElementById('loan-date').value; // Get the new date value
+        const interest = 0; // Campo eliminado del formulario
+        const loanDate = new Date().toISOString().split('T')[0]; // Fecha automática al guardar
         const details = document.getElementById('loan-details').value;
         const receiptFile = document.getElementById('loan-receipt').files[0];
+
+        if (!client) {
+            showToast("Selecciona un hermano primero", true);
+            return;
+        }
 
         saveBtn.disabled = true;
         saveBtn.textContent = 'Guardando...';
@@ -438,8 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 loanIdInput.value = loanToEdit.id;
                 document.getElementById('client-name').value = loanToEdit.client;
                 document.getElementById('loan-amount').value = parseFloat(loanToEdit.amount);
-                document.getElementById('loan-interest').value = parseFloat(loanToEdit.interest) || 0;
-                document.getElementById('loan-date').value = loanToEdit.loanDate; // Populate date field
                 document.getElementById('loan-details').value = loanToEdit.details || '';
                 
                 saveBtn.textContent = 'Actualizar Préstamo';
@@ -471,7 +474,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearForm = () => {
         loanForm.reset();
         loanIdInput.value = '';
-        document.getElementById('loan-date').value = new Date().toISOString().split('T')[0];
         loanReceiptInput.value = '';
         saveBtn.textContent = 'Guardar Préstamo';
         cancelEditBtn.classList.add('hidden');
@@ -523,7 +525,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- INICIO DE APP ---
-    document.getElementById('loan-date').value = new Date().toISOString().split('T')[0];
     if (currentUser) {
         console.log("Usuario detectado:", currentUser);
         userSelection.classList.add('hidden');
