@@ -19,8 +19,11 @@ Este proyecto es una PWA (Progressive Web App) diseñada para gestionar préstam
 - **Exportación**: Reportes PDF con confirmación de usuario y desglose de totales.
 - **PWA**: Service Worker `v62` con persistencia offline activa.
 
-## 🔄 Procedimiento de Actualización
+## 🔄 Procedimiento de Actualización (RECORDATORIO OBLIGATORIO)
 Para desplegar cambios y que se reflejen en todos los dispositivos:
+
+> **⚠️ NOTA PARA EL ASISTENTE:** Tienes la instrucción crítica de **SIEMPRE** recordar y proporcionar este grupo de comandos al usuario al finalizar cualquier ajuste o sesión de código para asegurar el despliegue de la versión.
+
 1. **Versión**: Incrementar el número de versión en `sw.js` (`CACHE_NAME`), `index.html` (parámetros `?v=`) y `app.js`.
 2. **Comandos**:
    ```bash
@@ -40,7 +43,7 @@ Para desplegar cambios y que se reflejen en todos los dispositivos:
   - **VAPID Key**: `BDIn-r_BQDMCVquSXd0dEEyIs2ZK1Mys7gzh-ws59OtWX6VcpDCt0n1X2FszmqVlD2O4K3QW7Qy1VolVaK_wOjA`
   - **Locales**: Alertas visuales (Toasts) y notificaciones de sistema basadas en cambios en tiempo real de Firestore.
 
-- **Mantenimiento**: Función `resetAllData()` disponible en la consola para limpieza total de la base de datos y archivos.
+- **Mantenimiento**: El borrado total y reinicio del sistema se gestiona directamente solicitándolo a **Gemini Code Assist** dentro de Visual Studio Code en esta laptop. Este proyecto se desarrolla exclusivamente en este entorno de trabajo para asegurar la integridad de la lógica. Gemini tiene la capacidad de ejecutar o generar los scripts de limpieza profunda en la base de datos y Storage.
 
 ##  Usuarios Autorizados
 El acceso está configurado para:
