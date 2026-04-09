@@ -43,7 +43,7 @@ Para desplegar cambios y que se reflejen en todos los dispositivos:
   - **VAPID Key**: `BDIn-r_BQDMCVquSXd0dEEyIs2ZK1Mys7gzh-ws59OtWX6VcpDCt0n1X2FszmqVlD2O4K3QW7Qy1VolVaK_wOjA`
   - **Locales**: Alertas visuales (Toasts) y notificaciones de sistema basadas en cambios en tiempo real de Firestore.
 
-- **Mantenimiento**: El borrado total y reinicio del sistema se gestiona directamente solicitándolo a **Gemini Code Assist** dentro de Visual Studio Code en esta laptop. Para ejecutar comandos manuales en el navegador (como `resetAllData()`), se puede abrir la consola con **F12**, **Ctrl + Shift + I**, o **Clic derecho -> Inspeccionar**.
+- **Mantenimiento**: El borrado total y reinicio del sistema se gestiona directamente solicitándolo a **Gemini Code Assist** dentro de Visual Studio Code en esta laptop. Para ejecutar comandos manuales en el navegador (como `resetAllData()`), se debe ingresar a la URL de la app (https://prestamos-app-dfddb.web.app/) y abrir la consola con **F12**, **Ctrl + Shift + I**, o **Clic derecho -> Inspeccionar**.
 - **Entorno de Desarrollo**: Este proyecto se desarrolla y mantiene exclusivamente por Fabio utilizando **Gemini Code Assist** dentro de **Visual Studio Code** en su laptop personal. Se debe asegurar la integridad de la lógica operando siempre desde este entorno. Gemini tiene la capacidad de ejecutar o generar los scripts de limpieza profunda en la base de datos y Storage.
 
 ##  Usuarios Autorizados
