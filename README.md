@@ -19,8 +19,31 @@ Este proyecto es una PWA (Progressive Web App) diseñada para gestionar préstam
 - **Exportación**: Reportes PDF con confirmación de usuario y desglose de totales.
 - **PWA**: Service Worker `v62` con persistencia offline activa.
 
-## 👥 Usuarios Autorizados
-El acceso está configurado para los hermanos en el siguiente orden:
+## 🔄 Procedimiento de Actualización
+Para desplegar cambios y que se reflejen en todos los dispositivos:
+1. **Versión**: Incrementar el número de versión en `sw.js` (`CACHE_NAME`), `index.html` (parámetros `?v=`) y `app.js`.
+2. **Comandos**:
+   ```bash
+   git add .
+   git commit -m "v62: Descripción del cambio"
+   git push origin main
+   ```
+3. **Detección Automática**: La PWA detecta el cambio en el Service Worker, instala la nueva versión en segundo plano y recarga la aplicación automáticamente cuando está lista.
+
+## 🛠 Detalles Técnicos y Lógica de Negocio
+- **Seguridad**: PIN de 2 dígitos por usuario guardado en `localStorage`. No se almacenan contraseñas en el servidor.
+- **Integridad**: Una vez que una deuda es **Aceptada**, el acreedor no puede editar el monto ni borrarla; solo se permiten abonos o liquidación total.
+- **Optimización de Imágenes**: Las fotos de los recibos se redimensionan a un máximo de 1024px y se comprimen al 70% de calidad antes de subir a Firebase Storage.
+- **Balance Neto**: Cálculo automático de *(Mis Cobros - Mis Deudas)* por cada hermano para facilitar liquidaciones rápidas.
+- **Notificaciones**: 
+  - **Push**: Utiliza Firebase Cloud Messaging (FCM). 
+  - **VAPID Key**: `BDIn-r_BQDMCVquSXd0dEEyIs2ZK1Mys7gzh-ws59OtWX6VcpDCt0n1X2FszmqVlD2O4K3QW7Qy1VolVaK_wOjA`
+  - **Locales**: Alertas visuales (Toasts) y notificaciones de sistema basadas en cambios en tiempo real de Firestore.
+
+- **Mantenimiento**: Función `resetAllData()` disponible en la consola para limpieza total de la base de datos y archivos.
+
+##  Usuarios Autorizados
+El acceso está configurado para:
 1. **Fabio**
 2. **Juan Carlos**
 3. **Ronald**
