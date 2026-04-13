@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v76 Iniciando...");
+    console.log("🚀 RZBRO$ v77 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -465,15 +465,29 @@ document.addEventListener('DOMContentLoaded', () => {
             waitingSection.innerHTML = `<h3 class="text-blue-400 font-black text-lg mb-5 uppercase tracking-[0.2em]">⏳ ESPERANDO CONFIRMACIÓN</h3>`;
             
             waitingForOthers.forEach(loan => {
+                const statuses = Object.values(loan.statuses || {});
+                const needsReview = statuses.includes('reviewing');
+
                 const card = document.createElement('div');
-                card.className = 'p-8 border-2 border-blue-500/30 rounded-3xl bg-blue-500/10 mb-5 shadow-xl flex justify-between items-center';
+                card.className = needsReview 
+                    ? 'p-8 border-4 border-amber-500 rounded-3xl bg-amber-900/20 mb-5 shadow-2xl flex justify-between items-center animate-pulse cursor-pointer'
+                    : 'p-8 border-2 border-blue-500/30 rounded-3xl bg-blue-500/10 mb-5 shadow-xl flex justify-between items-center';
+
                 card.innerHTML = `
                     <div>
-                        <p class="text-sm text-blue-400 uppercase font-bold mb-2 tracking-widest">Para: ${loan.client}</p>
+                        <p class="text-sm ${needsReview ? 'text-amber-500' : 'text-blue-400'} uppercase font-bold mb-2 tracking-widest">
+                            ${needsReview ? '⚠️ REVISIÓN SOLICITADA' : `Para: ${loan.client}`}
+                        </p>
                         <p class="text-5xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
+                        ${needsReview ? `<p class="text-[10px] text-amber-500/70 font-bold uppercase mt-1">HOLA, REVISA ESTE PRÉSTAMO</p>` : ''}
                     </div>
-                    <span class="bg-blue-500/20 text-blue-400 px-5 py-2 rounded-full text-xs font-black uppercase border border-blue-500/30">Pendiente</span>
+                    <span class="${needsReview ? 'bg-amber-500 text-black font-black' : 'bg-blue-500/20 text-blue-400 border-blue-500/30'} px-5 py-2 rounded-full text-xs font-black uppercase border">
+                        ${needsReview ? 'REVISAR' : 'Pendiente'}
+                    </span>
                 `;
+                if (needsReview) {
+                    card.onclick = () => window.viewAdminDetail(loan.client.split(',')[0]);
+                }
                 waitingSection.appendChild(card);
             });
             loansList.appendChild(waitingSection);
@@ -788,7 +802,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v76.");
+                    console.log("✅ Datos sincronizados v77.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
