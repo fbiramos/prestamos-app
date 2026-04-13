@@ -78,11 +78,6 @@
             <span class="text-xl">📋</span> <span class="text-xs">OTROS PRESTAMOS</span>
         </button>
 
-        <!-- Administrar Préstamos -->
-        <div class="container mx-auto p-4">
-            <h2 class="text-xl font-bold mb-4 text-white">Administrar Préstamos</h2>
-            <div id="admin-brothers-container" class="grid grid-cols-3 gap-2 sm:gap-4"></div>
-        </div>
     </div>
 
     <!-- Vista de Formulario (Nueva Página) -->
@@ -136,18 +131,13 @@
                     <div id="debts-col" class="space-y-2"></div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Vista de Administración Detallada -->
-    <div id="admin-detail-view" class="container mx-auto p-4 hidden">
-        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-lg min-h-[80vh]">
-            <div class="flex items-center gap-4 mb-8">
-                <button onclick="goBack()" class="text-blue-500 text-3xl">←</button>
-                <h2 id="admin-detail-title" class="text-2xl font-bold text-white uppercase tracking-tighter italic">Gestionar: ...</h2>
-            </div>
-            <div id="admin-loans-list" class="space-y-6">
-                <!-- Tarjetas grandes de administración -->
+            
+            <!-- Nueva Sección de Administración Integrada -->
+            <div id="admin-section-integrated" class="mt-12 pt-8 border-t border-slate-800">
+                <h3 class="text-amber-500 font-black text-xs uppercase mb-6 tracking-[0.2em] text-center">Gestionar mis Préstamos</h3>
+                <div id="admin-loans-list" class="space-y-6">
+                    <!-- Tarjetas de administración aquí -->
+                </div>
             </div>
         </div>
     </div>
@@ -190,6 +180,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <script src="app.js?v=81"></script>
+    <script src="app.js?v=82"></script>
 </body>
 </html>

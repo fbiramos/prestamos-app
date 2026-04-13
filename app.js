@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v81 Iniciando...");
+    console.log("🚀 RZBRO$ v82 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -39,8 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const brotherDetailView = document.getElementById('brother-detail-view');
     const brotherDetailTitle = document.getElementById('brother-detail-title');
     const brotherLoansList = document.getElementById('brother-loans-list');
-    const adminDetailView = document.getElementById('admin-detail-view');
-    const adminDetailTitle = document.getElementById('admin-detail-title');
     const adminLoansList = document.getElementById('admin-loans-list');
     const externalLoansView = document.getElementById('external-loans-view');
     const externalLoansList = document.getElementById('external-loans-list');
@@ -170,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboardView.classList.add('hidden');
         formView.classList.add('hidden');
         brotherDetailView.classList.add('hidden');
-        adminDetailView.classList.add('hidden');
         externalLoansView.classList.add('hidden');
 
         if (view === 'form') {
@@ -178,9 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
             window.scrollTo(0, 0);
         } else if (view === 'brother-detail') {
             brotherDetailView.classList.remove('hidden');
-            window.scrollTo(0, 0);
-        } else if (view === 'admin-detail') {
-            adminDetailView.classList.remove('hidden');
             window.scrollTo(0, 0);
         } else if (view === 'external-loans') {
             externalLoansView.classList.remove('hidden');
@@ -192,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.goBack = () => {
-        if (!formView.classList.contains('hidden') || !brotherDetailView.classList.contains('hidden') || !adminDetailView.classList.contains('hidden') || !externalLoansView.classList.contains('hidden')) {
+        if (!formView.classList.contains('hidden') || !brotherDetailView.classList.contains('hidden') || !externalLoansView.classList.contains('hidden')) {
             history.back();
         }
     };
@@ -203,9 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (event.state && event.state.view === 'brother-detail') {
             updateView('brother-detail');
             renderBrotherDetail(event.state.brotherName);
-        } else if (event.state && event.state.view === 'admin-detail') {
-            updateView('admin-detail');
-            renderAdminDetail(event.state.brotherName);
         } else if (event.state && event.state.view === 'external-loans') {
             updateView('external-loans');
         } else {
@@ -217,12 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
         history.pushState({ view: 'brother-detail', brotherName: name }, '');
         updateView('brother-detail');
         renderBrotherDetail(name);
-    };
-
-    window.viewAdminDetail = (name) => {
-        history.pushState({ view: 'admin-detail', brotherName: name }, '');
-        updateView('admin-detail');
-        renderAdminDetail(name);
     };
 
     toggleFormBtn.addEventListener('click', () => {
@@ -237,7 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderBrothersStatus = () => {
         const dashboardContainer = document.getElementById('brothers-status-container');
-        const adminContainer = document.getElementById('admin-brothers-container');
         const formContainer = document.getElementById('form-brothers-container');
         const others = Object.keys(BROTHERS).filter(name => name !== currentUser);
 
@@ -253,21 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             btn.onclick = () => window.viewBrotherDetail(name);
                 dashboardContainer.appendChild(btn);
-            });
-        }
-
-        // Renderizar en Administrar Préstamos
-        if (adminContainer) {
-            adminContainer.innerHTML = '';
-            others.forEach(name => {
-                const btn = document.createElement('button');
-                btn.className = 'bg-slate-900 border border-slate-700 p-2 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center justify-center sm:justify-between hover:border-amber-500 hover:bg-slate-800 transition-all group active:scale-95 shadow-lg shadow-black/20';
-                btn.innerHTML = `
-                    <span class="font-bold text-slate-200 text-xl sm:text-3xl text-center">${name}</span>
-                    <span class="text-amber-500 group-hover:translate-x-1 transition-transform hidden sm:inline">⚙️</span>
-                `;
-                btn.onclick = () => window.viewAdminDetail(name);
-                adminContainer.appendChild(btn);
             });
         }
 
@@ -462,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p class="text-sm text-red-400 uppercase font-bold mb-2 tracking-widest">POR ${whoRejected.toUpperCase()}</p>
                         <p class="text-5xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
                     </div>
-                    <button onclick="viewAdminDetail('${whoRejected.split(',')[0]}')" class="bg-red-600 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase shadow-lg shadow-red-900/40 active:scale-95 transition-all">Revisar</button>
+                    <button onclick="viewBrotherDetail('${whoRejected.split(',')[0]}')" class="bg-red-600 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase shadow-lg shadow-red-900/40 active:scale-95 transition-all">Revisar</button>
                 `;
                 rejectSection.appendChild(card);
             });
@@ -501,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </span>
                 `;
                 if (needsReview) {
-                    card.onclick = () => window.viewAdminDetail(loan.client.split(',')[0]);
+                    card.onclick = () => window.viewBrotherDetail(loan.client.split(',')[0]);
                 }
                 waitingSection.appendChild(card);
             });
@@ -545,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderBrotherDetail = (brotherName) => {
         brotherDetailTitle.textContent = `Estado con ${brotherName}`;
         brotherLoansList.innerHTML = '';
+        adminLoansList.innerHTML = '';
 
         // Filtrar cobros: Soy el dueño, para este cliente, y no rechazados por él
         const collections = globalData.filter(l => 
@@ -612,15 +582,9 @@ document.addEventListener('DOMContentLoaded', () => {
         grid.appendChild(col1);
         grid.appendChild(col2);
         brotherLoansList.appendChild(grid);
-    };
 
-    const renderAdminDetail = (brotherName) => {
-        adminDetailTitle.textContent = `Gestionar: ${brotherName}`;
-        adminLoansList.innerHTML = '';
-
-        const myCollections = globalData.filter(l => 
-            l.owner === currentUser && l.client && l.client.split(',').map(s => s.trim()).includes(brotherName)
-        );
+        // --- PARTE DE ADMINISTRACIÓN INTEGRADA ---
+        const myCollections = collections; // Ya los tenemos filtrados arriba
 
         if (myCollections.length === 0) {
             adminLoansList.innerHTML = `<div class="text-center py-20 text-slate-600 font-bold uppercase tracking-widest text-xs">No tienes préstamos otorgados a ${brotherName}</div>`;
@@ -817,7 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v81.");
+                    console.log("✅ Datos sincronizados v82.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
@@ -826,10 +790,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Si estamos en la vista de detalle, refrescarla
                     if (!brotherDetailView.classList.contains('hidden') && history.state && history.state.brotherName) {
                         renderBrotherDetail(history.state.brotherName);
-                    }
-                    // Si estamos en administración, refrescar
-                    if (!adminDetailView.classList.contains('hidden') && history.state && history.state.brotherName) {
-                        renderAdminDetail(history.state.brotherName);
                     }
                 },
                 error => {
