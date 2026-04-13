@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v83 Iniciando...");
+    console.log("🚀 RZBRO$ v84 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -540,10 +540,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = document.createElement('div');
                 card.className = `p-3 border rounded-xl bg-slate-900 shadow-sm ${isCollection ? 'border-blue-500/30' : 'border-rose-500/30'}`;
                 card.innerHTML = `
-                    <p class="text-[9px] font-bold uppercase ${isCollection ? 'text-blue-400' : 'text-rose-400'} mb-1">${isCollection ? 'Cobro' : 'Deuda'}</p>
-                    <p class="text-white font-bold text-sm">$ ${new Intl.NumberFormat('es-MX').format(remaining)}</p>
-                    ${paid > 0 ? `<p class="text-[9px] text-slate-500 italic">De $${new Intl.NumberFormat('es-MX').format(original)}</p>` : ''}
-                    <p class="text-[9px] text-slate-600 mt-1">${loan.loanDate}</p>
+                    <p class="text-xs font-bold uppercase ${isCollection ? 'text-blue-400' : 'text-rose-400'} mb-1">${isCollection ? 'Cobro' : 'Deuda'}</p>
+                    <p class="text-white font-bold text-lg">$ ${new Intl.NumberFormat('es-MX').format(remaining)}</p>
+                    ${paid > 0 ? `<p class="text-xs text-slate-500 italic">De $${new Intl.NumberFormat('es-MX').format(original)}</p>` : ''}
+                    <p class="text-xs text-slate-600 mt-1">${loan.loanDate}</p>
                 `;
                 container.appendChild(card);
             });
@@ -554,11 +554,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const summaryCard = document.createElement('div');
         summaryCard.className = `mb-6 p-4 rounded-2xl border ${balance >= 0 ? 'bg-blue-500/10 border-blue-500/30' : 'bg-rose-500/10 border-rose-500/30'} text-center`;
         summaryCard.innerHTML = `
-            <p class="text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-1">Balance Neto</p>
+            <p class="text-sm uppercase font-bold tracking-widest text-slate-400 mb-1">Balance Neto</p>
             <p class="text-3xl font-black ${balance >= 0 ? 'text-blue-400' : 'text-rose-400'}">
                 ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Math.abs(balance))}
             </p>
-            <p class="text-[10px] uppercase font-bold mt-1 ${balance >= 0 ? 'text-blue-500/60' : 'text-rose-500/60'}">
+            <p class="text-sm uppercase font-bold mt-1 ${balance >= 0 ? 'text-blue-500/60' : 'text-rose-500/60'}">
                 ${balance >= 0 ? `Te debe ${brotherName}` : `Le debes a ${brotherName}`}
             </p>
         `;
@@ -569,11 +569,11 @@ document.addEventListener('DOMContentLoaded', () => {
         grid.className = 'grid grid-cols-2 gap-3';
         
         const col1 = document.createElement('div');
-        col1.innerHTML = `<h4 class="text-[10px] uppercase text-blue-500 font-bold mb-2 text-center">Cobros</h4>`;
+        col1.innerHTML = `<h4 class="text-xs uppercase text-blue-500 font-bold mb-2 text-center">Cobros</h4>`;
         col1.appendChild(renderColumn(collections, true));
 
         const col2 = document.createElement('div');
-        col2.innerHTML = `<h4 class="text-[10px] uppercase text-rose-500 font-bold mb-2 text-center">Deudas</h4>`;
+        col2.innerHTML = `<h4 class="text-xs uppercase text-rose-500 font-bold mb-2 text-center">Deudas</h4>`;
         col2.appendChild(renderColumn(debts, false));
 
         grid.appendChild(col1);
@@ -598,9 +598,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const status = (loan.statuses && loan.statuses[brotherName]) || 'pending';
             let statusBadge = '';
             if (status === 'rejected') {
-                statusBadge = `<p class="text-red-500 font-bold text-[10px] uppercase tracking-widest mb-2 animate-pulse">⚠️ Préstamo Rechazado</p>`;
+                statusBadge = `<p class="text-red-500 font-bold text-sm uppercase tracking-widest mb-2 animate-pulse">⚠️ Préstamo Rechazado</p>`;
             } else if (status === 'pending') {
-                statusBadge = `<p class="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-2">⏳ Pendiente de revisión</p>`;
+                statusBadge = `<p class="text-amber-500 font-bold text-sm uppercase tracking-widest mb-2">⏳ Pendiente de revisión</p>`;
             }
 
             const card = document.createElement('div');
@@ -608,18 +608,18 @@ document.addEventListener('DOMContentLoaded', () => {
             card.innerHTML = `
                 <div class="mb-4 text-center">
                     ${statusBadge}
-                    <p class="text-blue-400 font-bold uppercase text-xs tracking-widest mb-1">${loan.client}</p>
+                    <p class="text-blue-400 font-bold uppercase text-sm tracking-widest mb-1">${loan.client}</p>
                     <p class="text-5xl font-black text-white leading-none">$ ${new Intl.NumberFormat('es-MX').format(remaining)}</p>
-                    ${paid > 0 ? `<p class="text-slate-500 text-xs mt-2 uppercase font-bold tracking-widest">Original: $${new Intl.NumberFormat('es-MX').format(original)}</p>` : ''}
-                    <p class="text-slate-600 text-[10px] mt-1">${loan.loanDate}</p>
+                    ${paid > 0 ? `<p class="text-slate-500 text-sm mt-2 uppercase font-bold tracking-widest">Original: $${new Intl.NumberFormat('es-MX').format(original)}</p>` : ''}
+                    <p class="text-slate-600 text-xs mt-1">${loan.loanDate}</p>
                 </div>
                 ${paid > 0 ? `
                     <div class="mb-4 bg-slate-800/30 rounded-xl p-3">
-                        <p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Historial de Abonos</p>
-                        ${loan.payments.map(p => `<div class="flex justify-between text-xs py-1 border-b border-slate-800/50 text-slate-400"><span>${p.date}</span><span class="font-bold text-emerald-500">+$${p.amount}</span></div>`).join('')}
+                        <p class="text-xs text-slate-500 font-bold uppercase mb-2">Historial de Abonos</p>
+                        ${loan.payments.map(p => `<div class="flex justify-between text-sm py-1 border-b border-slate-800/50 text-slate-400"><span>${p.date}</span><span class="font-bold text-emerald-500">+$${p.amount}</span></div>`).join('')}
                     </div>
                 ` : ''}
-                ${loan.details ? `<p class="bg-slate-800/50 p-3 rounded-xl text-slate-300 text-sm mb-4 text-center italic">"${loan.details}"</p>` : ''}
+                ${loan.details ? `<p class="bg-slate-800/50 p-3 rounded-xl text-slate-300 text-base mb-4 text-center italic">"${loan.details}"</p>` : ''}
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="editLoan('${loan.id}')" class="bg-amber-600/20 text-amber-500 border border-amber-600/40 py-3 rounded-2xl font-bold uppercase text-xs hover:bg-amber-600 hover:text-white transition-all">
                         ${isLocked ? 'Ver' : 'Editar'}
@@ -629,7 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </button>
                 </div>
                 ${isLocked ? `
-                    <button onclick="addPaymentPrompt('${loan.id}')" class="w-full mt-3 bg-emerald-600/20 text-emerald-500 border border-emerald-600/40 py-3 rounded-2xl font-bold uppercase text-xs hover:bg-emerald-600 hover:text-white transition-all">
+                    <button onclick="addPaymentPrompt('${loan.id}')" class="w-full mt-3 bg-emerald-600/20 text-emerald-500 border border-emerald-600/40 py-3 rounded-2xl font-bold uppercase text-sm hover:bg-emerald-600 hover:text-white transition-all">
                         Registrar Abono
                     </button>
                 ` : ''}
@@ -771,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v83.");
+                    console.log("✅ Datos sincronizados v84.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
