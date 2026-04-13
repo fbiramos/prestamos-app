@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v65 Iniciando...");
+    console.log("🚀 RZBRO$ v66 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -808,7 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v65.");
+                    console.log("✅ Datos sincronizados v66.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
@@ -929,29 +929,34 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.textContent = 'Guardando...';
 
         try {
-            let receiptURL = loanId ? (allLoans.find(l => l.id === loanId)?.receiptURL || '') : '';
+            // Obtener datos existentes si es edición buscando en globalData (que tiene todos los préstamos)
+            const existingLoan = loanId ? globalData.find(l => l.id === loanId) : null;
+            let receiptURL = existingLoan ? (existingLoan.receiptURL || '') : '';
+            const existingStatuses = existingLoan ? (existingLoan.statuses || {}) : {};
 
             if (receiptFile) {
+                console.log("📸 Subiendo imagen a Storage...");
                 const filePath = `receipts/${Date.now()}_${receiptFile.name}`;
                 const fileRef = storage.ref(filePath);
                 await fileRef.put(receiptFile);
                 receiptURL = await fileRef.getDownloadURL();
+                console.log("✅ Imagen subida:", receiptURL);
             }
 
             // Inicializar estados para deudores
             const statuses = {};
             selectedBrothers.forEach(name => {
-                statuses[name] = 'pending';
+                // Si ya tenía un estado y el hermano sigue asignado, lo mantenemos; si es nuevo, pending
+                statuses[name] = existingStatuses[name] || 'pending';
             });
 
-            // Agregamos el campo 'owner' para saber de quién es el préstamo
-            // Inicializamos 'payments' como array vacío
-            const loanData = { client, amount, loanDate, details, receiptURL, owner: currentUser, statuses, payments: [] };
+            const loanData = { client, amount, details, receiptURL, owner: currentUser, statuses };
 
             if (loanId) { // Actualizar
-                delete loanData.payments; // No resetear pagos al editar
                 await db.collection('loans').doc(loanId).update({ client, amount, details, receiptURL, statuses });
             } else { // Crear
+                loanData.loanDate = loanDate;
+                loanData.payments = [];
                 await db.collection('loans').add(loanData);
             }
 
