@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v75 Iniciando...");
+    console.log("🚀 RZBRO$ v76 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -436,18 +436,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rejectedByOthers.length > 0) {
             const rejectSection = document.createElement('div');
             rejectSection.className = 'mb-6';
-            rejectSection.innerHTML = `<h3 class="text-red-500 font-black text-[10px] mb-3 uppercase tracking-[0.2em] flex items-center gap-2">⚠️ ATENCIÓN: PRÉSTAMOS RECHAZADOS</h3>`;
+            rejectSection.innerHTML = `<h3 class="text-red-500 font-black text-lg mb-5 uppercase tracking-[0.2em] flex items-center gap-2">⚠️ ATENCIÓN: RECHAZADOS</h3>`;
             
             rejectedByOthers.forEach(loan => {
                 const whoRejected = Object.entries(loan.statuses || {}).filter(([n, s]) => s === 'rejected').map(([n]) => n).join(', ');
                 const card = document.createElement('div');
-                card.className = 'p-4 border-2 border-red-600 rounded-2xl bg-red-950/40 mb-3 shadow-xl flex justify-between items-center animate-pulse';
+                card.className = 'p-8 border-4 border-red-600 rounded-3xl bg-red-950/60 mb-5 shadow-2xl flex justify-between items-center animate-pulse';
                 card.innerHTML = `
                     <div>
-                        <p class="text-[10px] text-red-400 uppercase font-bold mb-1">POR ${whoRejected.toUpperCase()}</p>
-                        <p class="text-xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
+                        <p class="text-sm text-red-400 uppercase font-bold mb-2 tracking-widest">POR ${whoRejected.toUpperCase()}</p>
+                        <p class="text-5xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
                     </div>
-                    <button onclick="viewAdminDetail('${whoRejected.split(',')[0]}')" class="bg-red-600 text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-red-900/40 active:scale-95 transition-all">Revisar</button>
+                    <button onclick="viewAdminDetail('${whoRejected.split(',')[0]}')" class="bg-red-600 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase shadow-lg shadow-red-900/40 active:scale-95 transition-all">Revisar</button>
                 `;
                 rejectSection.appendChild(card);
             });
@@ -462,17 +462,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (waitingForOthers.length > 0) {
             const waitingSection = document.createElement('div');
             waitingSection.className = 'mb-8';
-            waitingSection.innerHTML = `<h3 class="text-blue-400 font-black text-[10px] mb-3 uppercase tracking-[0.2em]">⏳ POR CONFIRMAR</h3>`;
+            waitingSection.innerHTML = `<h3 class="text-blue-400 font-black text-lg mb-5 uppercase tracking-[0.2em]">⏳ ESPERANDO CONFIRMACIÓN</h3>`;
             
             waitingForOthers.forEach(loan => {
                 const card = document.createElement('div');
-                card.className = 'p-4 border border-blue-500/30 rounded-2xl bg-blue-500/5 mb-3 shadow-lg flex justify-between items-center';
+                card.className = 'p-8 border-2 border-blue-500/30 rounded-3xl bg-blue-500/10 mb-5 shadow-xl flex justify-between items-center';
                 card.innerHTML = `
                     <div>
-                        <p class="text-[10px] text-blue-400 uppercase font-bold mb-1">Para: ${loan.client}</p>
-                        <p class="text-xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
+                        <p class="text-sm text-blue-400 uppercase font-bold mb-2 tracking-widest">Para: ${loan.client}</p>
+                        <p class="text-5xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
                     </div>
-                    <span class="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full text-[9px] font-bold uppercase border border-blue-500/20">Esperando...</span>
+                    <span class="bg-blue-500/20 text-blue-400 px-5 py-2 rounded-full text-xs font-black uppercase border border-blue-500/30">Pendiente</span>
                 `;
                 waitingSection.appendChild(card);
             });
@@ -483,27 +483,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (payables.length > 0) {
             const pendingSection = document.createElement('div');
             pendingSection.className = 'mb-8';
-            pendingSection.innerHTML = `<h3 class="text-rose-500 font-black text-[10px] mb-3 uppercase tracking-[0.2em]">🔔 DEUDAS POR APROBAR</h3>`;
+            pendingSection.innerHTML = `<h3 class="text-rose-500 font-black text-lg mb-5 uppercase tracking-[0.2em]">🔔 DEUDAS POR APROBAR</h3>`;
             
             payables.forEach(loan => {
                 const status = (loan.statuses && loan.statuses[currentUser]) || 'pending';
                 if (status === 'accepted' || status === 'rejected') return;
 
                 const card = document.createElement('div');
-                card.className = 'p-4 border border-rose-900/50 rounded-2xl bg-slate-900 mb-3 shadow-lg';
+                card.className = 'p-8 border-2 border-rose-900/50 rounded-3xl bg-slate-900 mb-5 shadow-2xl';
                 card.innerHTML = `
-                    <div class="flex justify-between items-center mb-3">
+                    <div class="flex justify-between items-center mb-6">
                         <div>
-                            <p class="text-[10px] text-slate-500 uppercase font-bold">De: ${loan.owner}</p>
-                            <p class="text-xl font-bold text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
+                            <p class="text-sm text-slate-500 uppercase font-bold mb-2 tracking-widest">De: ${loan.owner}</p>
+                            <p class="text-5xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
                         </div>
-                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${status === 'pending' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-500'}">${status === 'reviewing' ? 'En revisión' : 'Pendiente'}</span>
+                        <span class="px-4 py-2 rounded-lg text-xs font-black uppercase ${status === 'pending' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-500'}">${status === 'reviewing' ? 'En revisión' : 'Nuevo'}</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-2 rounded-xl text-[10px] font-bold uppercase shadow-lg shadow-emerald-900/20">Aceptar</button>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-5 rounded-2xl text-sm font-black uppercase shadow-lg shadow-emerald-900/40 active:scale-95 transition-all">Aceptar</button>
                         ${status === 'pending' ? 
-                            `<button onclick="updateDebtStatus('${loan.id}', 'reviewing')" class="bg-slate-800 text-slate-300 py-2 rounded-xl text-[10px] font-bold uppercase border border-slate-700">Revisar</button>` :
-                            `<button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-2 rounded-xl text-[10px] font-bold uppercase">Rechazar</button>`
+                            `<button onclick="updateDebtStatus('${loan.id}', 'reviewing')" class="bg-slate-800 text-slate-300 py-5 rounded-2xl text-sm font-black uppercase border border-slate-700 active:scale-95 transition-all">Revisar</button>` :
+                            `<button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-5 rounded-2xl text-sm font-black uppercase active:scale-95 transition-all">Rechazar</button>`
                         }
                     </div>
                 `;
@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v74.");
+                    console.log("✅ Datos sincronizados v76.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
