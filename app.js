@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v62 Iniciando...");
+    console.log("🚀 RZBRO$ v63 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -406,17 +406,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pagos: Préstamos donde yo soy el cliente
         const payables = allData.filter(l => l.client && l.client.split(',').map(s => s.trim()).includes(currentUser));
 
-        // 1. Cobrador (Juan Carlos): No sumamos ABSOLUTAMENTE NADA que tenga un estado 'rejected'
+        // 1. Cobrador: Solo sumamos si TODOS los deudores han aceptado la deuda
         const totalReceivables = receivables.reduce((acc, loan) => {
             const statuses = Object.values(loan.statuses || {});
-            if (statuses.includes('rejected')) return acc; // Si alguien rechazó, el total no lo cuenta
+            const allAccepted = statuses.length > 0 && statuses.every(s => s === 'accepted');
+            if (!allAccepted) return acc;
             return acc + getLoanBalance(loan).remaining;
         }, 0);
 
-        // 2. Deudor (Fabio): No sumamos deudas que nosotros mismos marcamos como 'rejected'
+        // 2. Deudor: Solo sumamos si yo (el deudor) he aceptado explícitamente la deuda
         const totalPayables = payables.reduce((acc, loan) => {
             const myStatus = (loan.statuses && loan.statuses[currentUser]) || 'pending';
-            if (myStatus === 'rejected') return acc;
+            if (myStatus !== 'accepted') return acc;
             return acc + getLoanBalance(loan).remaining;
         }, 0);
 
@@ -425,27 +426,27 @@ document.addEventListener('DOMContentLoaded', () => {
             totalToPayDisplay.textContent = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(totalPayables);
         }
 
-        allLoans = receivables; // Mantenemos Cobros para la gestión de la lista y exportación
-
-        // 3. Alerta en Dashboard para el Cobrador (Juan Carlos)
-        const rejectedByOthers = receivables.filter(l => {
+        // Guardamos solo los préstamos aceptados para la exportación PDF y lista activa principal
+        allLoans = receivables.filter(l => {
             const statuses = Object.values(l.statuses || {});
-            return statuses.includes('rejected');
+            return statuses.length > 0 && statuses.every(s => s === 'accepted');
         });
 
+        // 3. Préstamos Rechazados (Alerta para el dueño)
+        const rejectedByOthers = receivables.filter(l => l.statuses && Object.values(l.statuses).includes('rejected'));
         if (rejectedByOthers.length > 0) {
             const rejectSection = document.createElement('div');
-            rejectSection.className = 'mb-6 animate-pulse'; // Efecto visual de urgencia
-            rejectSection.innerHTML = `<h3 class="text-red-500 font-black text-xs mb-3 uppercase tracking-[0.2em] flex items-center gap-2">⚠️ ATENCIÓN: DEUDAS RECHAZADAS</h3>`;
+            rejectSection.className = 'mb-6';
+            rejectSection.innerHTML = `<h3 class="text-red-500 font-black text-[10px] mb-3 uppercase tracking-[0.2em] flex items-center gap-2">⚠️ ATENCIÓN: PRÉSTAMOS RECHAZADOS</h3>`;
             
             rejectedByOthers.forEach(loan => {
                 const whoRejected = Object.entries(loan.statuses || {}).filter(([n, s]) => s === 'rejected').map(([n]) => n).join(', ');
                 const card = document.createElement('div');
-                card.className = 'p-4 border-2 border-red-600 rounded-2xl bg-red-950/40 mb-3 shadow-xl flex justify-between items-center';
+                card.className = 'p-4 border-2 border-red-600 rounded-2xl bg-red-950/40 mb-3 shadow-xl flex justify-between items-center animate-pulse';
                 card.innerHTML = `
                     <div>
-                        <p class="text-[10px] text-red-400 uppercase font-bold mb-1">Rechazado por ${whoRejected}</p>
-                        <p class="text-xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
+                        <p class="text-[10px] text-red-400 uppercase font-bold mb-1">POR ${whoRejected.toUpperCase()}</p>
+                        <p class="text-xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
                     </div>
                     <button onclick="viewAdminDetail('${whoRejected.split(',')[0]}')" class="bg-red-600 text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-red-900/40 active:scale-95 transition-all">Revisar</button>
                 `;
@@ -454,34 +455,57 @@ document.addEventListener('DOMContentLoaded', () => {
             loansList.appendChild(rejectSection);
         }
 
-        // 2. Renderizar Deudas Pendientes para el Deudor
+        // 4. Préstamos Enviados (Esperando confirmación - Para el dueño)
+        const waitingForOthers = receivables.filter(l => {
+            const statuses = Object.values(l.statuses || {});
+            return (statuses.includes('pending') || statuses.includes('reviewing')) && !statuses.includes('rejected');
+        });
+        if (waitingForOthers.length > 0) {
+            const waitingSection = document.createElement('div');
+            waitingSection.className = 'mb-8';
+            waitingSection.innerHTML = `<h3 class="text-blue-400 font-black text-[10px] mb-3 uppercase tracking-[0.2em]">⏳ POR CONFIRMAR</h3>`;
+            
+            waitingForOthers.forEach(loan => {
+                const card = document.createElement('div');
+                card.className = 'p-4 border border-blue-500/30 rounded-2xl bg-blue-500/5 mb-3 shadow-lg flex justify-between items-center';
+                card.innerHTML = `
+                    <div>
+                        <p class="text-[10px] text-blue-400 uppercase font-bold mb-1">Para: ${loan.client}</p>
+                        <p class="text-xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
+                    </div>
+                    <span class="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full text-[9px] font-bold uppercase border border-blue-500/20">Esperando...</span>
+                `;
+                waitingSection.appendChild(card);
+            });
+            loansList.appendChild(waitingSection);
+        }
+
+        // 5. Deudas por Aprobar (Para el deudor)
         if (payables.length > 0) {
             const pendingSection = document.createElement('div');
             pendingSection.className = 'mb-8';
-            pendingSection.innerHTML = `<h3 class="text-rose-500 font-bold text-sm mb-4 uppercase tracking-widest">Deudas por Aprobar</h3>`;
+            pendingSection.innerHTML = `<h3 class="text-rose-500 font-black text-[10px] mb-3 uppercase tracking-[0.2em]">🔔 DEUDAS POR APROBAR</h3>`;
             
             payables.forEach(loan => {
                 const status = (loan.statuses && loan.statuses[currentUser]) || 'pending';
-                if (status === 'accepted' || status === 'rejected') return; // Solo pendientes o en revisión
+                if (status === 'accepted' || status === 'rejected') return;
 
                 const card = document.createElement('div');
-                card.className = 'p-4 border border-rose-900/50 rounded-xl bg-slate-900 mb-3 shadow-lg';
+                card.className = 'p-4 border border-rose-900/50 rounded-2xl bg-slate-900 mb-3 shadow-lg';
                 card.innerHTML = `
                     <div class="flex justify-between items-center mb-3">
                         <div>
-                            <p class="text-xs text-slate-500 uppercase font-bold">Acreedor: ${loan.owner}</p>
-                            <p class="text-xl font-bold text-white">$ ${loan.amount}</p>
+                            <p class="text-[10px] text-slate-500 uppercase font-bold">De: ${loan.owner}</p>
+                            <p class="text-xl font-bold text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
                         </div>
                         <span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${status === 'pending' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-500'}">${status === 'reviewing' ? 'En revisión' : 'Pendiente'}</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        ${status === 'pending' ? `
-                            <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-2 rounded-lg text-xs font-bold uppercase">Aceptar</button>
-                            <button onclick="updateDebtStatus('${loan.id}', 'reviewing')" class="bg-slate-800 text-slate-300 py-2 rounded-lg text-xs font-bold uppercase border border-slate-700">En Revisión</button>
-                        ` : status === 'reviewing' ? `
-                            <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-2 rounded-lg text-xs font-bold uppercase">Aceptar</button>
-                            <button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-2 rounded-lg text-xs font-bold uppercase">Rechazar</button>
-                        ` : ''}
+                        <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-2 rounded-xl text-[10px] font-bold uppercase shadow-lg shadow-emerald-900/20">Aceptar</button>
+                        ${status === 'pending' ? 
+                            `<button onclick="updateDebtStatus('${loan.id}', 'reviewing')" class="bg-slate-800 text-slate-300 py-2 rounded-xl text-[10px] font-bold uppercase border border-slate-700">Revisar</button>` :
+                            `<button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-2 rounded-xl text-[10px] font-bold uppercase">Rechazar</button>`
+                        }
                     </div>
                 `;
                 pendingSection.appendChild(card);
@@ -495,6 +519,11 @@ document.addEventListener('DOMContentLoaded', () => {
         brotherLoansList.innerHTML = '';
 
         const collections = globalData.filter(l => l.owner === currentUser && l.client && l.client.includes(brotherName));
+        // Filtrar excluyendo rechazos para el balance neto
+        const collections = globalData.filter(l => 
+            l.owner === currentUser && l.client && l.client.includes(brotherName) && 
+            (!l.statuses || l.statuses[brotherName] !== 'rejected')
+        );
         const debts = globalData.filter(l => l.owner === brotherName && l.client && l.client.includes(currentUser) && l.statuses && l.statuses[currentUser] === 'accepted');
 
         if (collections.length === 0 && debts.length === 0) {
