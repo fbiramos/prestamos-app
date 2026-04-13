@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v82 Iniciando...");
+    console.log("🚀 RZBRO$ v83 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -561,9 +561,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="text-[10px] uppercase font-bold mt-1 ${balance >= 0 ? 'text-blue-500/60' : 'text-rose-500/60'}">
                 ${balance >= 0 ? `Te debe ${brotherName}` : `Le debes a ${brotherName}`}
             </p>
-            <button onclick="liquidateAccounts('${brotherName}')" class="mt-4 w-full py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase rounded-xl transition-all border border-slate-700 active:scale-95">
-                Liquidar Cuentas
-            </button>
         `;
 
         brotherLoansList.appendChild(summaryCard);
@@ -627,10 +624,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button onclick="editLoan('${loan.id}')" class="bg-amber-600/20 text-amber-500 border border-amber-600/40 py-3 rounded-2xl font-bold uppercase text-xs hover:bg-amber-600 hover:text-white transition-all">
                         ${isLocked ? 'Ver' : 'Editar'}
                     </button>
-                    ${isLocked ? 
-                        `<button disabled class="bg-slate-800 text-slate-600 py-3 rounded-2xl font-bold uppercase text-xs cursor-not-allowed opacity-50">Aceptado</button>` :
-                        `<button onclick="deleteLoan('${loan.id}')" class="bg-red-600 text-white py-3 rounded-2xl font-bold uppercase text-xs shadow-lg shadow-red-900/20">Pagado</button>`
-                    }
+                    <button onclick="deleteLoan('${loan.id}')" class="py-3 rounded-2xl font-bold uppercase text-xs transition-all ${isLocked ? 'bg-emerald-600/20 text-emerald-500 border border-emerald-600/40 hover:bg-emerald-600 hover:text-white' : 'bg-red-600 text-white shadow-lg shadow-red-900/20'}">
+                        ${isLocked ? 'Liquidar' : 'Pagado'}
+                    </button>
                 </div>
                 ${isLocked ? `
                     <button onclick="addPaymentPrompt('${loan.id}')" class="w-full mt-3 bg-emerald-600/20 text-emerald-500 border border-emerald-600/40 py-3 rounded-2xl font-bold uppercase text-xs hover:bg-emerald-600 hover:text-white transition-all">
@@ -751,16 +747,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const loan = globalData.find(l => l.id === id);
         if (!loan) return;
 
-        const isLocked = loan.statuses && Object.values(loan.statuses).includes('accepted');
-        if (isLocked) {
-            showToast("No se puede eliminar una deuda aceptada", true);
-            return;
-        }
-
-        if (confirm('¿Seguro que quieres marcar este préstamo como pagado?')) {
+        if (confirm('¿Seguro que quieres marcar este préstamo como pagado o liquidado?')) {
             try {
                 await db.collection('loans').doc(id).delete();
-                showToast("Préstamo marcado como pagado");
+                showToast("Operación liquidada con éxito");
             } catch (error) {
                 console.error("Error borrando:", error);
                 showToast("Error al procesar", true);
@@ -781,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v82.");
+                    console.log("✅ Datos sincronizados v83.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
