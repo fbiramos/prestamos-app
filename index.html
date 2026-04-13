@@ -71,10 +71,12 @@
             <button id="toggle-form-btn" class="w-full bg-blue-600 text-white p-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-all">
                 <span class="text-2xl">➕</span> NUEVO PRÉSTAMO
             </button>
-            <button id="open-external-btn" class="w-full mt-4 bg-slate-800 text-slate-300 p-4 font-bold border border-slate-700 flex items-center justify-center gap-2 active:scale-95 transition-all rounded-xl">
-                <span class="text-xl">📋</span> MIS PRÉSTAMOS EXTERNOS
-            </button>
         </div>
+        
+        <!-- Acceso discreto a Préstamos Externos -->
+        <button id="open-external-btn" class="fixed bottom-4 left-4 z-30 bg-slate-900/30 text-slate-600 p-2 rounded border border-slate-800/50 text-[8px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 hover:text-slate-400 transition-all flex items-center gap-1">
+            <span>📋</span> EXTERN
+        </button>
 
         <!-- Administrar Préstamos -->
         <div class="container mx-auto p-4">
@@ -188,6 +190,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <script src="app.js?v=78"></script>
+    <script src="app.js?v=79"></script>
 </body>
 </html>
