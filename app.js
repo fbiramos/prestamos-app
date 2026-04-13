@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v64 Iniciando...");
+    console.log("🚀 RZBRO$ v65 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -518,8 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
         brotherDetailTitle.textContent = `Estado con ${brotherName}`;
         brotherLoansList.innerHTML = '';
 
-        const collections = globalData.filter(l => l.owner === currentUser && l.client && l.client.includes(brotherName));
-        // Filtrar excluyendo rechazos para el balance neto
+        // Filtrar cobros: Soy el dueño, para este cliente, y no rechazados por él
         const collections = globalData.filter(l => 
             l.owner === currentUser && l.client && l.client.includes(brotherName) && 
             (!l.statuses || l.statuses[brotherName] !== 'rejected')
@@ -809,7 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v64.");
+                    console.log("✅ Datos sincronizados v65.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
