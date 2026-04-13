@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v66 Iniciando...");
+    console.log("🚀 RZBRO$ v75 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const storage = firebase.storage();
     const messaging = firebase.messaging();
 
     // Habilitar Persistencia Offline
@@ -678,14 +677,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const batch = db.batch();
             
             for (const doc of snapshot.docs) {
-                const data = doc.data();
-                // Borrar imagen si existe
-                if (data.receiptURL) {
-                    try {
-                        const imageRef = storage.refFromURL(data.receiptURL);
-                        await imageRef.delete().catch(() => {});
-                    } catch (e) {}
-                }
                 batch.delete(doc.ref);
             }
 
@@ -719,12 +710,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const batch = db.batch();
                 
                 for (const loan of allToSettle) {
-                    if (loan.receiptURL) {
-                        try {
-                            const imageRef = storage.refFromURL(loan.receiptURL);
-                            await imageRef.delete().catch(() => {});
-                        } catch (e) {}
-                    }
                     batch.delete(db.collection('loans').doc(loan.id));
                 }
                 
@@ -753,7 +738,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(input.id !== 'loan-id') input.disabled = isLocked;
             });
             saveBtn.classList.toggle('hidden', isLocked);
-            document.getElementById('start-camera-btn').classList.toggle('hidden', isLocked);
             document.getElementById('form-brothers-container').classList.toggle('pointer-events-none', isLocked);
             document.getElementById('form-brothers-container').classList.toggle('opacity-50', isLocked);
 
@@ -782,10 +766,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (confirm('¿Seguro que quieres marcar este préstamo como pagado?')) {
             try {
-                if (loan && loan.receiptURL) {
-                    const imageRef = storage.refFromURL(loan.receiptURL);
-                    await imageRef.delete().catch(e => console.warn("Error Storage:", e));
-                }
                 await db.collection('loans').doc(id).delete();
                 showToast("Préstamo marcado como pagado");
             } catch (error) {
@@ -800,7 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore para:", currentUser);
+        console.log("📡 Conectando Firestore v75 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -808,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v66.");
+                    console.log("✅ Datos sincronizados v74.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
@@ -833,83 +813,6 @@ document.addEventListener('DOMContentLoaded', () => {
             );
     };
 
-    // --- LÓGICA DE LA CÁMARA ---
-    const startCameraBtn = document.getElementById('start-camera-btn');
-    const cameraContainer = document.getElementById('camera-container');
-    const video = document.getElementById('camera-stream');
-    const captureBtn = document.getElementById('capture-btn');
-    const cancelCameraBtn = document.getElementById('cancel-camera-btn');
-    const canvas = document.getElementById('canvas');
-    const loanReceiptInput = document.getElementById('loan-receipt');
-    let stream;
-
-    startCameraBtn.addEventListener('click', async () => {
-        cameraContainer.classList.remove('hidden');
-        startCameraBtn.textContent = 'Iniciando...';
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            video.srcObject = stream;
-            video.play();
-        } catch (error) {
-            console.error("Error al acceder a la cámara: ", error);
-            alert("No se pudo acceder a la cámara. Asegúrate de dar permiso.");
-            cameraContainer.classList.add('hidden');
-        }
-        startCameraBtn.textContent = 'Tomar Foto';
-    });
-
-    captureBtn.addEventListener('click', () => {
-        const context = canvas.getContext('2d');
-        
-        // Redimensionar para ahorrar espacio (máximo 1024px)
-        const MAX_WIDTH = 1024;
-        const MAX_HEIGHT = 1024;
-        let width = video.videoWidth;
-        let height = video.videoHeight;
-
-        if (width > height) {
-            if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-            }
-        } else {
-            if (height > MAX_HEIGHT) {
-                width *= MAX_HEIGHT / height;
-                height = MAX_HEIGHT;
-            }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        context.drawImage(video, 0, 0, width, height);
-        
-        // Bajamos la calidad a 0.7 (70%) para reducir drásticamente el peso del archivo
-        canvas.toBlob(blob => {
-            const file = new File([blob], `captura_${Date.now()}.jpg`, { type: 'image/jpeg' });
-            
-            // Asignar el archivo al input file
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            loanReceiptInput.files = dataTransfer.files;
-
-            // Opcional: mostrar un feedback al usuario
-            console.log("Foto capturada y asignada al formulario.");
-
-            stopCamera();
-        }, 'image/jpeg');
-    });
-
-    cancelCameraBtn.addEventListener('click', () => {
-        stopCamera();
-    });
-
-    const stopCamera = () => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-        }
-        cameraContainer.classList.add('hidden');
-    };
-
     // --- MANEJO DEL FORMULARIO (AGREGAR/EDITAR) ---
     loanForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -918,7 +821,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const amount = parseFloat(document.getElementById('loan-amount').value);
         const loanDate = new Date().toISOString().split('T')[0]; // Fecha automática al guardar
         const details = document.getElementById('loan-details').value;
-        const receiptFile = document.getElementById('loan-receipt').files[0];
 
         if (!client) {
             showToast("Selecciona un hermano primero", true);
@@ -931,17 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Obtener datos existentes si es edición buscando en globalData (que tiene todos los préstamos)
             const existingLoan = loanId ? globalData.find(l => l.id === loanId) : null;
-            let receiptURL = existingLoan ? (existingLoan.receiptURL || '') : '';
             const existingStatuses = existingLoan ? (existingLoan.statuses || {}) : {};
-
-            if (receiptFile) {
-                console.log("📸 Subiendo imagen a Storage...");
-                const filePath = `receipts/${Date.now()}_${receiptFile.name}`;
-                const fileRef = storage.ref(filePath);
-                await fileRef.put(receiptFile);
-                receiptURL = await fileRef.getDownloadURL();
-                console.log("✅ Imagen subida:", receiptURL);
-            }
 
             // Inicializar estados para deudores
             const statuses = {};
@@ -950,10 +842,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 statuses[name] = existingStatuses[name] || 'pending';
             });
 
-            const loanData = { client, amount, details, receiptURL, owner: currentUser, statuses };
+            const loanData = { client, amount, details, owner: currentUser, statuses };
 
             if (loanId) { // Actualizar
-                await db.collection('loans').doc(loanId).update({ client, amount, details, receiptURL, statuses });
+                await db.collection('loans').doc(loanId).update({ client, amount, details, statuses });
             } else { // Crear
                 loanData.loanDate = loanDate;
                 loanData.payments = [];
@@ -962,8 +854,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             showToast(loanId ? "Préstamo actualizado" : "Préstamo guardado correctamente");
         } catch (error) {
-            console.error("Error guardando el préstamo: ", error);
-            alert("Hubo un error al guardar. Inténtalo de nuevo.");
+            console.error("❌ ERROR AL GUARDAR:", error);
+            alert(`⚠️ Error al guardar:\n${error.message}`);
         } finally {
             saveBtn.disabled = false;
             history.back();
@@ -973,10 +865,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearForm = () => {
         loanForm.reset();
         loanIdInput.value = '';
-        loanReceiptInput.value = '';
         saveBtn.textContent = 'Guardar Préstamo';
         saveBtn.classList.remove('hidden');
-        document.getElementById('start-camera-btn').classList.remove('hidden');
         cancelEditBtn.classList.add('hidden');
         cancelEditBtn.textContent = 'Cancelar Edición';
         

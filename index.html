@@ -102,21 +102,6 @@
                     <label class="block text-slate-400 text-sm font-medium mb-1">Detalles (Opcional)</label>
                     <textarea id="loan-details" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-blue-500 outline-none transition-all" rows="2"></textarea>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-slate-400 text-sm font-medium mb-1">Comprobante</label>
-                    <div class="flex items-center space-x-2">
-                        <input type="file" id="loan-receipt" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-400" accept="image/*">
-                        <button type="button" id="start-camera-btn" class="bg-indigo-600 text-white px-4 py-3 rounded-xl hover:bg-indigo-700 transition-colors text-sm font-bold">Cámara</button>
-                    </div>
-                </div>
-
-                <!-- Contenedor de la cámara -->
-                <div id="camera-container" class="mb-4 hidden">
-                    <video id="camera-stream" class="w-full border border-slate-700 rounded-xl mb-2"></video>
-                    <button type="button" id="capture-btn" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-bold hover:bg-emerald-700">Capturar</button>
-                    <button type="button" id="cancel-camera-btn" class="w-full bg-slate-800 text-white p-3 rounded-xl mt-2 border border-slate-700">Cancelar</button>
-                </div>
-                <canvas id="canvas" class="hidden"></canvas>
                 <button type="submit" id="save-btn" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-500 shadow-lg shadow-blue-900/20 transition-all">Guardar Préstamo</button>
                 <button type="button" id="cancel-edit-btn" class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 mt-2 hidden">Cancelar Edición</button>
             </form>
@@ -169,10 +154,9 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <script src="app.js?v=66"></script>
+    <script src="app.js?v=75"></script>
 </body>
 </html>
