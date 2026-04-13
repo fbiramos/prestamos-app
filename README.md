@@ -15,6 +15,7 @@ Este proyecto es una PWA (Progressive Web App) diseñada para gestionar préstam
 - **Integridad de Datos**: Bloqueo de edición y borrado una vez que una deuda ha sido aceptada por el deudor.
 - **Vista de Detalle**: Desglose por hermano en dos columnas (Mis Cobros vs Mis Deudas).
 - **Notificaciones**: Avisos push locales cuando se asigna una deuda o cuando un deudor la rechaza.
+- **Préstamos Externos**: Apartado personal para cada hermano para llevar registro de deudas de personas ajenas al grupo, con campos de deudor, motivo y fecha de vencimiento.
 - **Administración**: Sección dedicada para gestionar préstamos propios con visualización en tarjetas de gran formato.
 - **Exportación**: Reportes PDF con confirmación de usuario y desglose de totales.
 - **PWA**: Service Worker `v62` con persistencia offline activa.

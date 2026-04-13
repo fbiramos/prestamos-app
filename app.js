@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v77 Iniciando...");
+    console.log("🚀 RZBRO$ v78 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -42,7 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminDetailView = document.getElementById('admin-detail-view');
     const adminDetailTitle = document.getElementById('admin-detail-title');
     const adminLoansList = document.getElementById('admin-loans-list');
+    const externalLoansView = document.getElementById('external-loans-view');
+    const externalLoansList = document.getElementById('external-loans-list');
     const toggleFormBtn = document.getElementById('toggle-form-btn');
+    const openExternalBtn = document.getElementById('open-external-btn');
     const saveBtn = document.getElementById('save-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
     const totalAmountDisplay = document.getElementById('total-amount');
@@ -168,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formView.classList.add('hidden');
         brotherDetailView.classList.add('hidden');
         adminDetailView.classList.add('hidden');
+        externalLoansView.classList.add('hidden');
 
         if (view === 'form') {
             formView.classList.remove('hidden');
@@ -178,6 +182,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (view === 'admin-detail') {
             adminDetailView.classList.remove('hidden');
             window.scrollTo(0, 0);
+        } else if (view === 'external-loans') {
+            externalLoansView.classList.remove('hidden');
+            window.scrollTo(0, 0);
         } else {
             dashboardView.classList.remove('hidden');
             clearForm();
@@ -185,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.goBack = () => {
-        if (!formView.classList.contains('hidden') || !brotherDetailView.classList.contains('hidden') || !adminDetailView.classList.contains('hidden')) {
+        if (!formView.classList.contains('hidden') || !brotherDetailView.classList.contains('hidden') || !adminDetailView.classList.contains('hidden') || !externalLoansView.classList.contains('hidden')) {
             history.back();
         }
     };
@@ -199,6 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (event.state && event.state.view === 'admin-detail') {
             updateView('admin-detail');
             renderAdminDetail(event.state.brotherName);
+        } else if (event.state && event.state.view === 'external-loans') {
+            updateView('external-loans');
         } else {
             updateView('dashboard');
         }
@@ -219,6 +228,11 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleFormBtn.addEventListener('click', () => {
         history.pushState({ view: 'form' }, '');
         updateView('form');
+    });
+
+    openExternalBtn.addEventListener('click', () => {
+        history.pushState({ view: 'external-loans' }, '');
+        updateView('external-loans');
     });
 
     const renderBrothersStatus = () => {
@@ -295,6 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userSelection.classList.add('hidden');
         pinModal.classList.add('hidden');
         initFirestoreListener();
+        initExternalLoansListener();
         renderBrothersStatus();
         history.replaceState({ view: 'dashboard' }, '');
         requestNotificationPermission();
@@ -802,7 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v77.");
+                    console.log("✅ Datos sincronizados v78.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
@@ -825,6 +840,88 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             );
+    };
+
+    // --- PRÉSTAMOS EXTERNOS ---
+    let unsubscribeExternal = null;
+    const initExternalLoansListener = () => {
+        if (!currentUser) return;
+        if (unsubscribeExternal) unsubscribeExternal();
+
+        unsubscribeExternal = db.collection('external_loans')
+            .where('owner', '==', currentUser)
+            .orderBy('createdAt', 'desc')
+            .onSnapshot(snapshot => {
+                const loans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                renderExternalLoans(loans);
+            });
+    };
+
+    const renderExternalLoans = (loans) => {
+        externalLoansList.innerHTML = '';
+        if (loans.length === 0) {
+            externalLoansList.innerHTML = `<p class="text-center text-slate-600 py-10 text-xs font-bold uppercase tracking-widest">No tienes préstamos externos registrados</p>`;
+            return;
+        }
+
+        loans.forEach(loan => {
+            const card = document.createElement('div');
+            card.className = 'p-5 border border-slate-800 rounded-2xl bg-slate-950 shadow-lg';
+            
+            const isOverdue = new Date(loan.dueDate) < new Date() && !loan.paid;
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-xs text-blue-500 font-bold uppercase tracking-tighter mb-1">${loan.debtor}</p>
+                        <p class="text-2xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(loan.amount)}</p>
+                    </div>
+                    <button onclick="deleteExternalLoan('${loan.id}')" class="text-slate-600 hover:text-red-500 transition-colors">🗑️</button>
+                </div>
+                <p class="text-sm text-slate-400 mb-4 italic">"${loan.reason}"</p>
+                <div class="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+                    <span class="text-slate-600">Vence: ${loan.dueDate}</span>
+                    <span class="${isOverdue ? 'text-red-500 animate-pulse' : 'text-emerald-500'}">${isOverdue ? 'Vencido' : 'En plazo'}</span>
+                </div>
+            `;
+            externalLoansList.appendChild(card);
+        });
+    };
+
+    const externalLoanForm = document.getElementById('external-loan-form');
+    externalLoanForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const debtor = document.getElementById('ext-debtor').value;
+        const reason = document.getElementById('ext-reason').value;
+        const amount = parseFloat(document.getElementById('ext-amount').value);
+        const dueDate = document.getElementById('ext-due-date').value;
+
+        try {
+            await db.collection('external_loans').add({
+                owner: currentUser,
+                debtor,
+                reason,
+                amount,
+                dueDate,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            externalLoanForm.reset();
+            showToast("Préstamo externo guardado");
+        } catch (error) {
+            console.error("Error guardando externo:", error);
+            showToast("Error al guardar", true);
+        }
+    });
+
+    window.deleteExternalLoan = async (id) => {
+        if (confirm("¿Marcar este préstamo como cobrado y eliminar de la lista?")) {
+            try {
+                await db.collection('external_loans').doc(id).delete();
+                showToast("Préstamo eliminado");
+            } catch (error) {
+                showToast("Error al eliminar", true);
+            }
+        }
     };
 
     // --- MANEJO DEL FORMULARIO (AGREGAR/EDITAR) ---
