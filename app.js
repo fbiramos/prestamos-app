@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v84 Iniciando...");
+    console.log("🚀 RZBRO$ v85 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -543,7 +543,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="text-xs font-bold uppercase ${isCollection ? 'text-blue-400' : 'text-rose-400'} mb-1">${isCollection ? 'Cobro' : 'Deuda'}</p>
                     <p class="text-white font-bold text-lg">$ ${new Intl.NumberFormat('es-MX').format(remaining)}</p>
                     ${paid > 0 ? `<p class="text-xs text-slate-500 italic">De $${new Intl.NumberFormat('es-MX').format(original)}</p>` : ''}
-                    <p class="text-xs text-slate-600 mt-1">${loan.loanDate}</p>
+                    <div class="flex justify-between items-center mt-2">
+                        <p class="text-xs text-slate-600">${loan.loanDate}</p>
+                        ${isCollection ? `<button onclick="document.getElementById('admin-card-${loan.id}').scrollIntoView({behavior: 'smooth'})" class="text-[9px] bg-blue-600/20 text-blue-400 px-2 py-1 rounded border border-blue-500/30 font-black uppercase">Gestionar</button>` : ''}
+                    </div>
                 `;
                 container.appendChild(card);
             });
@@ -604,6 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const card = document.createElement('div');
+            card.id = `admin-card-${loan.id}`;
             card.className = 'p-6 border border-slate-800 rounded-3xl bg-slate-900 shadow-xl mb-6';
             card.innerHTML = `
                 <div class="mb-4 text-center">
@@ -771,7 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v84.");
+                    console.log("✅ Datos sincronizados v85.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
