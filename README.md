@@ -3,33 +3,36 @@
 ## 🚀 Estado del Proyecto
 Este proyecto es una PWA (Progressive Web App) diseñada para gestionar préstamos personales de manera eficiente, con soporte multiusuario, funcionamiento offline y reportes detallados.
 
-## ✅ Cambios Recientes
+## ✅ Cambios Recientes (Hasta v88)
+- **Consolidación de Interfaz**: Se fusionaron las secciones de "Estado" y "Administración" en una única vista por hermano, eliminando redundancias.
+- **Nueva Página de Gestión**: Implementación de una vista dedicada para gestionar cada préstamo de forma individual, clara e intuitiva.
+- **Mejoras de Legibilidad**: Aumento del tamaño de fuente en los balances y detalles, y rediseño de botones de acción (más grandes y centrados).
+- **Simplificación Estratégica**: Eliminación de la funcionalidad de fotos y cámara para garantizar el funcionamiento perpetuo bajo el **Plan Spark (Gratuito)** de Firebase.
+- **Otros Préstamos**: Nuevo apartado personal para registrar deudas con terceros, con acceso destacado mediante el botón "OTROS PRESTAMOS".
 - **Branding y UI**: Modo Oscuro (Dark Mode) integral con paleta `slate-950`. Nombre oficial: **RZBRO$**.
 - **Navegación SPA**: Navegación por "páginas" internas (Dashboard, Formulario, Detalles) utilizando la **API de Historial** (el botón "atrás" del móvil no cierra la app).
 - **Seguridad Autogestionada**: Sistema de PIN de 2 dígitos creado por el usuario en su primer ingreso, guardado localmente.
-- **Formulario Inteligente**: Selección múltiple de deudores, fecha automática, cámara integrada y selección rápida de hermanos.
+- **Formulario Inteligente**: Selección múltiple de deudores, fecha automática y selección rápida de hermanos.
 - **Flujo de Deuda**: Implementación de estados (`pending`, `reviewing`, `accepted`, `rejected`).
 - **Notificaciones Inteligentes**: Sistema de alertas locales basado en cambios de Firestore en tiempo real (Plan Spark compatible).
 - **Abonos Parciales**: Posibilidad de registrar pagos graduales en deudas aceptadas, con historial visible.
-- **Liquidación de Cuentas**: Cálculo de balance neto por hermano y botón para saldar deudas mutuas en un solo clic.
+- **Liquidación Individual**: Capacidad de liquidar cada préstamo por separado para un control más preciso.
 - **Integridad de Datos**: Bloqueo de edición y borrado una vez que una deuda ha sido aceptada por el deudor.
 - **Vista de Detalle**: Desglose por hermano en dos columnas (Mis Cobros vs Mis Deudas).
 - **Notificaciones**: Avisos push locales cuando se asigna una deuda o cuando un deudor la rechaza.
-- **Préstamos Externos**: Apartado personal para cada hermano para llevar registro de deudas de personas ajenas al grupo, con campos de deudor, motivo y fecha de vencimiento.
-- **Administración**: Sección dedicada para gestionar préstamos propios con visualización en tarjetas de gran formato.
 - **Exportación**: Reportes PDF con confirmación de usuario y desglose de totales.
-- **PWA**: Service Worker `v62` con persistencia offline activa.
+- **PWA**: Service Worker `v88` con persistencia offline activa.
 
 ## 🔄 Procedimiento de Actualización (RECORDATORIO OBLIGATORIO)
 Para desplegar cambios y que se reflejen en todos los dispositivos:
 
 > **⚠️ NOTA PARA EL ASISTENTE:** Tienes la instrucción crítica de **SIEMPRE** recordar y proporcionar este grupo de comandos al usuario al finalizar cualquier ajuste o sesión de código para asegurar el despliegue de la versión.
 
-1. **Versión**: Incrementar el número de versión en `sw.js` (`CACHE_NAME`), `index.html` (parámetros `?v=`) y `app.js`.
+1. **Versión**: Incrementar el número de versión en `sw.js` (`CACHE_NAME`), `index.html` (`?v=88`) y `app.js`.
 2. **Comandos**:
    ```bash
    git add .
-   git commit -m "v62: Descripción del cambio"
+   git commit -m "v88: Consolidación de vistas, página de gestión individual y mejoras de legibilidad"
    git push origin main
    ```
 3. **Detección Automática**: La PWA detecta el cambio en el Service Worker, instala la nueva versión en segundo plano y recarga la aplicación automáticamente cuando está lista.
@@ -37,7 +40,6 @@ Para desplegar cambios y que se reflejen en todos los dispositivos:
 ## 🛠 Detalles Técnicos y Lógica de Negocio
 - **Seguridad**: PIN de 2 dígitos por usuario guardado en `localStorage`. No se almacenan contraseñas en el servidor.
 - **Integridad**: Una vez que una deuda es **Aceptada**, el acreedor no puede editar el monto ni borrarla; solo se permiten abonos o liquidación total.
-- **Optimización de Imágenes**: Las fotos de los recibos se redimensionan a un máximo de 1024px y se comprimen al 70% de calidad antes de subir a Firebase Storage.
 - **Balance Neto**: Cálculo automático de *(Mis Cobros - Mis Deudas)* por cada hermano para facilitar liquidaciones rápidas.
 - **Notificaciones**: 
   - **Push**: Utiliza Firebase Cloud Messaging (FCM). 
