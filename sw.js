@@ -19,12 +19,12 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE_NAME = 'prestamos-cache-v87';
+const CACHE_NAME = 'prestamos-cache-v88';
 const urlsToCache = [
   '/',
   '/index.html',
   '/style.css',
-  '/app.js?v=87',
+  '/app.js?v=88',
   '/manifest.json?v=4',
   'https://cdn.tailwindcss.com',
   '/icons/icon-192x192.png?v=4',

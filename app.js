@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v87 Iniciando...");
+    console.log("🚀 RZBRO$ v88 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -551,15 +551,16 @@ document.addEventListener('DOMContentLoaded', () => {
             list.forEach(loan => {
                 const { original, remaining, paid } = getLoanBalance(loan);
                 const card = document.createElement('div');
-                card.className = `p-3 border rounded-xl bg-slate-900 shadow-sm ${isCollection ? 'border-blue-500/30' : 'border-rose-500/30'}`;
+                card.className = `p-5 border rounded-2xl bg-slate-900 shadow-sm ${isCollection ? 'border-blue-500/30' : 'border-rose-500/30'}`;
                 card.innerHTML = `
                     <p class="text-xs font-bold uppercase ${isCollection ? 'text-blue-400' : 'text-rose-400'} mb-1">${isCollection ? 'Cobro' : 'Deuda'}</p>
-                    <p class="text-white font-bold text-lg">$ ${new Intl.NumberFormat('es-MX').format(remaining)}</p>
+                    <p class="text-white font-bold text-2xl">$ ${new Intl.NumberFormat('es-MX').format(remaining)}</p>
                     ${paid > 0 ? `<p class="text-xs text-slate-500 italic">De $${new Intl.NumberFormat('es-MX').format(original)}</p>` : ''}
-                    <div class="flex justify-between items-center mt-2">
-                        <p class="text-xs text-slate-600">${loan.loanDate}</p>
-                        ${isCollection ? `<button onclick="openLoanManage('${loan.id}')" class="text-[9px] bg-blue-600/20 text-blue-400 px-2 py-1 rounded border border-blue-500/30 font-black uppercase">Gestionar</button>` : ''}
-                    </div>
+                    <p class="text-xs text-slate-600 mt-2">${loan.loanDate}</p>
+                    ${isCollection ? `
+                        <div class="mt-4 flex justify-center">
+                            <button onclick="openLoanManage('${loan.id}')" class="w-full text-[10px] bg-blue-600/20 text-blue-400 py-2.5 rounded-xl border border-blue-500/30 font-black uppercase hover:bg-blue-600 hover:text-white transition-all tracking-widest">Gestionar</button>
+                        </div>` : ''}
                 `;
                 container.appendChild(card);
             });
@@ -786,7 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v87.");
+                    console.log("✅ Datos sincronizados v88.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
