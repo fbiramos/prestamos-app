@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v97 Iniciando...");
+    console.log("🚀 RZBRO$ v98 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -327,16 +327,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- ACCIONES DE DEUDA (Mejoradas con Notación de Puntos para Concurrencia) ---
-    window.updateDebtStatus = async (loanId, newStatus) => {
+    window.updateDebtStatus = async (loanId, newStatus, targetClient = null) => {
         try {
             const loanRef = db.collection('loans').doc(loanId);
             // Usamos dot notation para actualizar solo la clave del usuario actual
             // sin arriesgarnos a borrar los estados de otros hermanos que se actualicen al mismo tiempo.
             const updatePayload = {};
-            updatePayload[`statuses.${currentUser}`] = newStatus;
+            const clientToUpdate = targetClient || currentUser;
+            updatePayload[`statuses.${clientToUpdate}`] = newStatus;
 
             await loanRef.update(updatePayload);
-            showToast(`Movimiento: ${newStatus === 'accepted' ? 'Confirmado' : newStatus === 'rejected' ? 'Cancelado' : 'En revisión'}`);
+            showToast(`Movimiento: ${newStatus === 'accepted' ? 'Confirmado' : newStatus === 'rejected' ? 'Cancelado' : 'En revisión'} para ${clientToUpdate}`);
         } catch (error) {
             console.error("Error actualizando estado:", error);
             showToast("Error al procesar", true);
@@ -488,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </span>
                 `;
                 if (needsReview) {
-                    card.onclick = () => window.viewBrotherDetail(loan.client.split(',')[0]);
+                    card.onclick = () => window.openLoanManage(loan.id); // Ahora va a la gestión del préstamo
                 }
                 waitingSection.appendChild(card);
             });
@@ -635,6 +636,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p class="text-slate-600 text-sm mt-2">${loan.loanDate}</p>
             </div>
             ${paid > 0 ? `
+                <div class="mb-8 bg-slate-800/30 rounded-2xl p-4">
+                    <p class="text-xs text-slate-500 font-bold uppercase mb-4 tracking-widest">Historial de Abonos</p>
+                    ${loan.payments.map(p => `<div class="flex justify-between text-base py-3 border-b border-slate-800/50 text-slate-400"><span>${p.date}</span><span class="font-bold text-emerald-500">+$${p.amount}</span></div>`).join('')}
+                </div>
+            ` : ''}
+            ${loan.details ? `<div class="bg-slate-800/50 p-6 rounded-2xl text-slate-300 text-lg mb-8 text-center italic leading-relaxed">"${loan.details}"</div>` : ''}
+
+            ${currentUser === loan.owner ? `
+                ${Object.entries(loan.statuses || {}).filter(([, status]) => status === 'pending' || status === 'reviewing').length > 0 ? `
+                    <div class="mb-8">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">Acciones como Cobrador:</p>
+                        ${Object.entries(loan.statuses || {})
+                            .filter(([, status]) => status === 'pending' || status === 'reviewing')
+                            .map(([clientName, clientStatus]) => `
+                                <div class="bg-slate-800/50 p-4 rounded-xl mb-3">
+                                    <p class="text-sm text-white font-bold mb-2">${clientName} (${clientStatus === 'reviewing' ? 'En Revisión' : 'Pendiente'})</p>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <button onclick="updateDebtStatus('${loan.id}', 'accepted', '${clientName}')" class="bg-emerald-600 text-white py-3 rounded-xl text-xs font-black uppercase shadow-lg shadow-emerald-900/40 active:scale-95 transition-all">Confirmar</button>
+                                        <button onclick="updateDebtStatus('${loan.id}', 'rejected', '${clientName}')" class="bg-red-600 text-white py-3 rounded-xl text-xs font-black uppercase active:scale-95 transition-all">Cancelar</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                    </div>
+                ` : ''}
+            ` : ''}
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <button onclick="editLoan('${loan.id}')" class="bg-amber-600/20 text-amber-500 border border-amber-600/40 py-5 rounded-3xl font-black uppercase text-sm hover:bg-amber-600 hover:text-white transition-all shadow-lg active:scale-95">
+                    ${isLocked ? 'Ver Info' : 'Editar'}
+                </button>
+                <button onclick="deleteLoan('${loan.id}')" class="py-5 rounded-3xl font-black uppercase text-sm transition-all shadow-lg active:scale-95 ${isLocked ? 'bg-emerald-600/20 text-emerald-500 border border-emerald-600/40 hover:bg-emerald-600 hover:text-white' : 'bg-red-600 text-white shadow-red-900/20'}">
+                    ${isLocked ? 'Liquidar' : 'Pagado'}
+                </button>
+            </div>
+            ${isLocked ? `
                 <div class="mb-8 bg-slate-800/30 rounded-2xl p-4">
                     <p class="text-xs text-slate-500 font-bold uppercase mb-4 tracking-widest">Historial de Abonos</p>
                     ${loan.payments.map(p => `<div class="flex justify-between text-base py-3 border-b border-slate-800/50 text-slate-400"><span>${p.date}</span><span class="font-bold text-emerald-500">+$${p.amount}</span></div>`).join('')}
@@ -788,7 +824,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v97 para:", currentUser);
+        console.log("📡 Conectando Firestore v98 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -796,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v97.");
+                    console.log("✅ Datos sincronizados v98.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
