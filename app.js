@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v88 Iniciando...");
+    console.log("🚀 RZBRO$ v89 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -91,14 +91,13 @@ document.addEventListener('DOMContentLoaded', () => {
         pinInput.value = '';
     };
 
-    // Validación automática al ingresar exactamente 2 dígitos
-    pinInput.addEventListener('input', () => {
+    window.submitPin = () => {
         const pinValue = pinInput.value;
 
-        if (pinValue.length !== 2) {
+        if (pinValue.length < 2) {
+            showToast("Ingresa 2 dígitos", true);
             return;
         }
-
         const savedPin = localStorage.getItem(`rzbros_pin_${selectedUser}`);
 
         if (loginStep === 'SET') {
@@ -118,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginStep = 'SET';
                 pinSubtitle.textContent = 'Crea tu PIN de 2 dígitos';
                 pinInput.value = '';
+                pinInput.focus();
             }
         } 
         else if (loginStep === 'LOGIN') {
@@ -126,8 +126,13 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 showToast("PIN incorrecto", true);
                 pinInput.value = '';
+                pinInput.focus();
             }
         }
+    };
+
+    pinInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') window.submitPin();
     });
 
     // --- PERMISOS DE NOTIFICACIÓN ---
@@ -779,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v75 para:", currentUser);
+        console.log("📡 Conectando Firestore v89 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -787,7 +792,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v88.");
+                    console.log("✅ Datos sincronizados v89.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
