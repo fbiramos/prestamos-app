@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v99 Iniciando...");
+    console.log("🚀 RZBRO$ v100 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -635,14 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${paid > 0 ? `<p class="text-slate-500 text-sm mt-4 uppercase font-bold tracking-widest">Original: $${new Intl.NumberFormat('es-MX').format(original)}</p>` : ''}
                 <p class="text-slate-600 text-sm mt-2">${loan.loanDate}</p>
             </div>
-            ${paid > 0 ? `
-                <div class="mb-8 bg-slate-800/30 rounded-2xl p-4">
-                    <p class="text-xs text-slate-500 font-bold uppercase mb-4 tracking-widest">Historial de Abonos</p>
-                    ${loan.payments.map(p => `<div class="flex justify-between text-base py-3 border-b border-slate-800/50 text-slate-400"><span>${p.date}</span><span class="font-bold text-emerald-500">+$${p.amount}</span></div>`).join('')}
-                </div>
-            ` : ''}
-            ${loan.details ? `<div class="bg-slate-800/50 p-6 rounded-2xl text-slate-300 text-lg mb-8 text-center italic leading-relaxed">"${loan.details}"</div>` : ''}
 
+            <!-- Acciones de Revisión para el Cobrador -->
             ${currentUser === loan.owner ? `
                 ${Object.entries(loan.statuses || {}).filter(([, status]) => status === 'pending' || status === 'reviewing').length > 0 ? `
                     <div class="mb-8">
@@ -663,30 +657,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 ` : ''}
             ` : ''}
 
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <button onclick="editLoan('${loan.id}')" class="bg-amber-600/20 text-amber-500 border border-amber-600/40 py-5 rounded-3xl font-black uppercase text-sm hover:bg-amber-600 hover:text-white transition-all shadow-lg active:scale-95">
-                    ${isLocked ? 'Ver Info' : 'Editar'}
-                </button>
-                <button onclick="deleteLoan('${loan.id}')" class="py-5 rounded-3xl font-black uppercase text-sm transition-all shadow-lg active:scale-95 ${isLocked ? 'bg-emerald-600/20 text-emerald-500 border border-emerald-600/40 hover:bg-emerald-600 hover:text-white' : 'bg-red-600 text-white shadow-red-900/20'}">
-                    ${isLocked ? 'Liquidar' : 'Pagado'}
-                </button>
-            </div>
-            ${isLocked ? `
+            <!-- Historial de Abonos -->
+            ${paid > 0 ? `
                 <div class="mb-8 bg-slate-800/30 rounded-2xl p-4">
                     <p class="text-xs text-slate-500 font-bold uppercase mb-4 tracking-widest">Historial de Abonos</p>
                     ${loan.payments.map(p => `<div class="flex justify-between text-base py-3 border-b border-slate-800/50 text-slate-400"><span>${p.date}</span><span class="font-bold text-emerald-500">+$${p.amount}</span></div>`).join('')}
                 </div>
             ` : ''}
+
+            <!-- Detalles del Préstamo -->
             ${loan.details ? `<div class="bg-slate-800/50 p-6 rounded-2xl text-slate-300 text-lg mb-8 text-center italic leading-relaxed">"${loan.details}"</div>` : ''}
+
+            <!-- Botones de Acción -->
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <button onclick="editLoan('${loan.id}')" class="bg-amber-600/20 text-amber-500 border border-amber-600/40 py-5 rounded-3xl font-black uppercase text-sm hover:bg-amber-600 hover:text-white transition-all shadow-lg active:scale-95">
                     ${isLocked ? 'Ver Info' : 'Editar'}
                 </button>
                 <button onclick="deleteLoan('${loan.id}')" class="py-5 rounded-3xl font-black uppercase text-sm transition-all shadow-lg active:scale-95 ${isLocked ? 'bg-emerald-600/20 text-emerald-500 border border-emerald-600/40 hover:bg-emerald-600 hover:text-white' : 'bg-red-600 text-white shadow-red-900/20'}">
-                    ${isLocked ? 'Liquidar' : 'Pagado'}
+                    ${isLocked ? 'Saldar' : 'Pagado'}
                 </button>
             </div>
-            ${isLocked ? `
+            ${isLocked && currentUser === loan.owner ? `
                 <button onclick="addPaymentPrompt('${loan.id}')" class="w-full bg-emerald-600 text-white py-6 rounded-3xl font-black uppercase text-base hover:bg-emerald-500 transition-all shadow-xl shadow-emerald-900/20 active:scale-95">
                     Registrar Abono
                 </button>
@@ -825,7 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v99 para:", currentUser);
+        console.log("📡 Conectando Firestore v100 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -833,7 +824,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v99.");
+                    console.log("✅ Datos sincronizados v100.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
