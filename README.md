@@ -3,7 +3,8 @@
 ## 🚀 Estado del Proyecto
 Este proyecto es una PWA (Progressive Web App) diseñada para gestionar préstamos personales de manera eficiente, con soporte multiusuario, funcionamiento offline y reportes detallados.
 
-## ✅ Cambios Recientes (Hasta v90)
+## ✅ Cambios Recientes (Hasta v91)
+- **Flujo de Aceptación (v91)**: Se mejoró la UI de deudas pendientes para permitir rechazar o confirmar en cualquier momento, añadiendo un botón discreto de "Solicitar Revisión" para casos de duda, dando control total al deudor.
 - **UI Login (v90)**: Se cambió el icono de confirmación "✓" por el texto "OK" para mayor claridad visual.
 - **Seguridad de Acceso (v89)**: Se añadió un botón de confirmación ("Enter") al ingresar el PIN, eliminando la validación automática para evitar errores y mejorar la experiencia de usuario.
 - **UI de Login**: El campo de PIN ahora cuenta con un botón visual "✓" integrado para confirmar tanto el registro como el acceso.
@@ -24,18 +25,18 @@ Este proyecto es una PWA (Progressive Web App) diseñada para gestionar préstam
 - **Vista de Detalle**: Desglose por hermano en dos columnas (Mis Cobros vs Mis Deudas).
 - **Notificaciones**: Avisos push locales cuando se asigna una deuda o cuando un deudor la rechaza.
 - **Exportación**: Reportes PDF con confirmación de usuario y desglose de totales.
-- **PWA**: Service Worker `v90` con persistencia offline activa.
+- **PWA**: Service Worker `v91` con persistencia offline activa.
 
 ## 🔄 Procedimiento de Actualización (RECORDATORIO OBLIGATORIO)
 Para desplegar cambios y que se reflejen en todos los dispositivos:
 
 > **⚠️ NOTA PARA EL ASISTENTE:** Tienes la instrucción crítica de **SIEMPRE** recordar y proporcionar este grupo de comandos al usuario al finalizar cualquier ajuste o sesión de código para asegurar el despliegue de la versión.
 
-1. **Versión**: Incrementar el número de versión en `sw.js` (`CACHE_NAME`), `index.html` (`?v=90`) y `app.js`.
+1. **Versión**: Incrementar el número de versión en `sw.js` (`CACHE_NAME`), `index.html` (`?v=91`) y `app.js`.
 2. **Comandos**:
    ```bash
    git add .
-   git commit -m "v90: Cambio de icono de check por OK en login"
+   git commit -m "v91: Mejoras en flujo de aceptación y rechazo de deudas"
    git push origin main
    ```
 3. **Detección Automática**: La PWA detecta el cambio en el Service Worker, instala la nueva versión en segundo plano y recarga la aplicación automáticamente cuando está lista.
