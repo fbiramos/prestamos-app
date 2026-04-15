@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v101 Iniciando...");
+    console.log("🚀 RZBRO$ v102 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -326,18 +326,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     };
 
-    // --- ACCIONES DE DEUDA (Mejoradas con Notación de Puntos para Concurrencia) ---
+    // --- ACCIONES DE DEUDA (Lógica de Ciclo de Aprobación v102) ---
     window.updateDebtStatus = async (loanId, newStatus, targetClient = null) => {
         try {
             const loanRef = db.collection('loans').doc(loanId);
-            // Usamos dot notation para actualizar solo la clave del usuario actual
-            // sin arriesgarnos a borrar los estados de otros hermanos que se actualicen al mismo tiempo.
             const updatePayload = {};
             const clientToUpdate = targetClient || currentUser;
-            updatePayload[`statuses.${clientToUpdate}`] = newStatus;
+
+            // Si el dueño "Confirma" una revisión, vuelve a 'pending' para que el deudor acepte formalmente
+            let statusToApply = newStatus;
+            if (targetClient && newStatus === 'accepted') statusToApply = 'pending';
+
+            updatePayload[`statuses.${clientToUpdate}`] = statusToApply;
 
             await loanRef.update(updatePayload);
-            showToast(`Movimiento: ${newStatus === 'accepted' ? 'Confirmado' : newStatus === 'rejected' ? 'Cancelado' : 'En revisión'} para ${clientToUpdate}`);
+            showToast(targetClient && newStatus === 'accepted' ? "Enviado de nuevo al deudor" : `Estado: ${newStatus}`);
         } catch (error) {
             console.error("Error actualizando estado:", error);
             showToast("Error al procesar", true);
@@ -818,7 +821,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v101 para:", currentUser);
+        console.log("📡 Conectando Firestore v102 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -826,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v101.");
+                    console.log("✅ Datos sincronizados v102.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
@@ -960,14 +963,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Obtener datos existentes si es edición buscando en globalData (que tiene todos los préstamos)
             const existingLoan = loanId ? globalData.find(l => l.id === loanId) : null;
-            const existingStatuses = existingLoan ? (existingLoan.statuses || {}) : {};
 
-            // Inicializar estados para deudores
+            // Al guardar o editar, todos los estados vuelven a 'pending' para validación del receptor
             const statuses = {};
-            selectedBrothers.forEach(name => {
-                // Si ya tenía un estado y el hermano sigue asignado, lo mantenemos; si es nuevo, pending
-                statuses[name] = existingStatuses[name] || 'pending';
-            });
+            selectedBrothers.forEach(name => { statuses[name] = 'pending'; });
 
             const loanData = { client, amount, details, owner: currentUser, statuses };
 

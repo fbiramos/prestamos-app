@@ -3,7 +3,8 @@
 ## 🚀 Estado del Proyecto
 Este proyecto es una PWA (Progressive Web App) diseñada para gestionar préstamos personales de manera eficiente, con soporte multiusuario, funcionamiento offline y reportes detallados.
 
-## ✅ Cambios Recientes (Hasta v101)
+## ✅ Cambios Recientes (Hasta v102)
+- **Ciclo de Aprobación Perpetuo (v102)**: Se ajustó la lógica para que cualquier edición o "confirmación" por parte del cobrador resetee el estado a pendiente, asegurando que el deudor siempre tenga la última palabra en la aceptación del préstamo.
 - **Rediseño de Acciones (v101)**: Se mejoró la visibilidad y separación de los botones de Confirmar, Cancelar y Editar en la vista de revisión, optimizando el espacio para evitar cortes de texto.
 - **Hito v100**: Refactorización completa de la vista de gestión individual para eliminar redundancia de código y mejorar la mantenibilidad.
 - **Gestión de Revisión Extendida (v99)**: Se añadió la opción "Editar" a las acciones del cobrador durante la revisión, permitiendo corregir montos o detalles antes de la confirmación final.
