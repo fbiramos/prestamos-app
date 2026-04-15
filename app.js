@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v96 Iniciando...");
+    console.log("🚀 RZBRO$ v97 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v96 para:", currentUser);
+        console.log("📡 Conectando Firestore v97 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -796,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v96.");
+                    console.log("✅ Datos sincronizados v97.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
@@ -874,8 +874,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const reason = document.getElementById('ext-reason').value;
         const amount = parseFloat(document.getElementById('ext-amount').value);
         const dueDate = document.getElementById('ext-due-date').value;
+        const submitBtn = e.target.querySelector('button[type="submit"]');
 
         try {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "GUARDANDO...";
+            
             await db.collection('external_loans').add({
                 owner: currentUser,
                 debtor,
@@ -889,6 +893,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Error guardando externo:", error);
             showToast("Error al guardar", true);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "AÑADIR A MI LISTA";
         }
     });
 

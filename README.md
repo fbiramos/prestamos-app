@@ -3,7 +3,8 @@
 ## 🚀 Estado del Proyecto
 Este proyecto es una PWA (Progressive Web App) diseñada para gestionar préstamos personales de manera eficiente, con soporte multiusuario, funcionamiento offline y reportes detallados.
 
-## ✅ Cambios Recientes (Hasta v96)
+## ✅ Cambios Recientes (Hasta v97)
+- **UX Mejora (v97)**: Se añadió un estado de carga al formulario de préstamos externos para evitar registros duplicados.
 - **Optimización de Salida (v96)**: Se cambió la estrategia de comunicación a formato "Diff" para evitar el truncamiento de código por el tamaño del archivo `app.js`.
 - **Estabilidad v95**: Consolidación total de funciones tras corrección de truncamiento. Se mantiene la seguridad de concurrencia y el flujo de revisión/cancelación.
 - **Optimización de Concurrencia (v94)**: Se implementó la actualización de estados mediante *dot notation* en Firestore, asegurando que las acciones de varios hermanos sobre un mismo préstamo no generen conflictos de datos.
