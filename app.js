@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v91 Iniciando...");
+    console.log("🚀 RZBRO$ v92 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -518,7 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="grid grid-cols-2 gap-4 mb-3">
                         <button onclick="updateDebtStatus('${loan.id}', 'accepted')" class="bg-emerald-600 text-white py-5 rounded-2xl text-sm font-black uppercase shadow-lg shadow-emerald-900/40 active:scale-95 transition-all">Confirmar</button>
-                        <button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-5 rounded-2xl text-sm font-black uppercase active:scale-95 transition-all">Rechazar</button>
+                        <button onclick="updateDebtStatus('${loan.id}', 'rejected')" class="bg-red-600 text-white py-5 rounded-2xl text-sm font-black uppercase active:scale-95 transition-all">Cancelar</button>
                     </div>
                     ${status === 'pending' ? `
                         <button onclick="updateDebtStatus('${loan.id}', 'reviewing')" class="w-full bg-slate-800 text-slate-400 py-3 rounded-xl text-[10px] font-black uppercase border border-slate-700 active:scale-95 transition-all tracking-widest italic">¿Algo no cuadra? Solicitar Revisión</button>
@@ -784,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v91 para:", currentUser);
+        console.log("📡 Conectando Firestore v92 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -792,7 +792,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v91.");
+                    console.log("✅ Datos sincronizados v92.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
