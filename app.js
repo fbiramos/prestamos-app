@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v100 Iniciando...");
+    console.log("🚀 RZBRO$ v101 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -646,10 +646,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             .map(([clientName, clientStatus]) => `
                                 <div class="bg-slate-800/50 p-4 rounded-xl mb-3">
                                     <p class="text-sm text-white font-bold mb-2">${clientName} (${clientStatus === 'reviewing' ? 'En Revisión' : 'Pendiente'})</p>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <button onclick="updateDebtStatus('${loan.id}', 'accepted', '${clientName}')" class="bg-emerald-600 text-white py-3 rounded-xl text-xs font-black uppercase shadow-lg shadow-emerald-900/40 active:scale-95 transition-all">Confirmar</button>
-                                        <button onclick="updateDebtStatus('${loan.id}', 'rejected', '${clientName}')" class="bg-red-600 text-white py-3 rounded-xl text-xs font-black uppercase active:scale-95 transition-all">Cancelar</button>
-                                        <button onclick="editLoan('${loan.id}')" class="bg-amber-600 text-white py-3 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-amber-900/40 active:scale-95 transition-all">Editar</button>
+                                    <div class="flex flex-col gap-3">
+                                        <button onclick="updateDebtStatus('${loan.id}', 'accepted', '${clientName}')" class="w-full bg-emerald-600 text-white py-5 rounded-2xl text-sm font-black uppercase shadow-lg shadow-emerald-900/40 active:scale-95 transition-all">✓ Confirmar</button>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <button onclick="updateDebtStatus('${loan.id}', 'rejected', '${clientName}')" class="bg-red-600 text-white py-5 rounded-2xl text-xs font-black uppercase active:scale-95 transition-all">✕ Cancelar</button>
+                                            <button onclick="editLoan('${loan.id}')" class="bg-amber-600 text-white py-5 rounded-2xl text-xs font-black uppercase shadow-lg shadow-amber-900/40 active:scale-95 transition-all">✎ Editar</button>
+                                        </div>
                                     </div>
                                 </div>
                             `).join('')}
@@ -816,7 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v100 para:", currentUser);
+        console.log("📡 Conectando Firestore v101 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -824,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v100.");
+                    console.log("✅ Datos sincronizados v101.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
