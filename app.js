@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v92 Iniciando...");
+    console.log("🚀 RZBRO$ v96 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -326,18 +326,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     };
 
-    // --- ACCIONES DE DEUDA ---
+    // --- ACCIONES DE DEUDA (Mejoradas con Notación de Puntos para Concurrencia) ---
     window.updateDebtStatus = async (loanId, newStatus) => {
         try {
             const loanRef = db.collection('loans').doc(loanId);
-            const doc = await loanRef.get();
-            if (!doc.exists) return;
+            // Usamos dot notation para actualizar solo la clave del usuario actual
+            // sin arriesgarnos a borrar los estados de otros hermanos que se actualicen al mismo tiempo.
+            const updatePayload = {};
+            updatePayload[`statuses.${currentUser}`] = newStatus;
 
-            const statuses = doc.data().statuses || {};
-            statuses[currentUser] = newStatus;
-
-            await loanRef.update({ statuses });
-            showToast(`Estado actualizado: ${newStatus}`);
+            await loanRef.update(updatePayload);
+            showToast(`Movimiento: ${newStatus === 'accepted' ? 'Confirmado' : newStatus === 'rejected' ? 'Cancelado' : 'En revisión'}`);
         } catch (error) {
             console.error("Error actualizando estado:", error);
             showToast("Error al procesar", true);
@@ -679,16 +678,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SCRIPT ADMINISTRATIVO DE REINICIO ---
     // Para usar: Abrir consola (F12) en PC y escribir: resetAllData()
     window.resetAllData = async () => {
-        if (!confirm("⚠️ ATENCIÓN: Vas a borrar todos los datos de RZBRO$ en todos los dispositivos. ¿Continuar?")) return;
+        if (!confirm("⚠️ ATENCIÓN: Vas a borrar TODOS los datos (Préstamos y Externos) de RZBRO$ en todos los dispositivos. Esta acción no se puede deshacer. ¿Continuar?")) return;
         
         try {
             showToast("Iniciando limpieza total...");
-            const snapshot = await db.collection('loans').get();
             const batch = db.batch();
             
-            for (const doc of snapshot.docs) {
-                batch.delete(doc.ref);
-            }
+            // Borrar Préstamos entre hermanos
+            const loansSnapshot = await db.collection('loans').get();
+            loansSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+
+            // Borrar Préstamos externos
+            const extSnapshot = await db.collection('external_loans').get();
+            extSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+
+            // Nota: fcm_tokens se mantienen para no romper notificaciones
 
             await batch.commit();
             showToast("Sistema reiniciado a cero con éxito");
@@ -784,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v92 para:", currentUser);
+        console.log("📡 Conectando Firestore v96 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -792,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v92.");
+                    console.log("✅ Datos sincronizados v96.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
