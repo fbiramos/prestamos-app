@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v104 Iniciando...");
+    console.log("🚀 RZBRO$ v105 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -344,7 +344,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // v104: Redirigir al dashboard tras cualquier acción de estado (Confirmar/Cancelar)
             if (!loanManageView.classList.contains('hidden')) {
-                setTimeout(() => history.back(), 300);
+                setTimeout(() => {
+                    history.pushState({ view: 'dashboard' }, '');
+                    updateView('dashboard');
+                }, 300);
             }
         } catch (error) {
             console.error("Error actualizando estado:", error);
@@ -831,7 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v104 para:", currentUser);
+        console.log("📡 Conectando Firestore v105 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -839,7 +842,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v104.");
+                    console.log("✅ Datos sincronizados v105.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
@@ -994,7 +997,9 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`⚠️ Error al guardar:\n${error.message}`);
         } finally {
             saveBtn.disabled = false;
-            history.back();
+            // v105: Tras editar o crear, volver siempre al inicio para ver el estado 'pendiente'
+            history.pushState({ view: 'dashboard' }, '');
+            updateView('dashboard');
         }
     });
 
