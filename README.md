@@ -3,7 +3,8 @@
 ## 🚀 Estado del Proyecto
 Este proyecto es una PWA (Progressive Web App) diseñada para gestionar préstamos personales de manera eficiente, con soporte multiusuario, funcionamiento offline y reportes detallados.
 
-## ✅ Cambios Recientes (Hasta v105)
+## ✅ Cambios Recientes (Hasta v106)
+- **Limpieza de Rechazados (v106)**: Se añadió un botón de "Descartar" directamente en las alertas de préstamos rechazados del Dashboard. Esto permite al cobrador eliminar la transacción fallida rápidamente sin navegar por otros menús.
 - **Redirección de Flujo Maestro (v105)**: Se optimizó el regreso a la pantalla de inicio tras editar o confirmar un préstamo en revisión. Ahora, el cobrador es redirigido siempre al Dashboard para confirmar visualmente que el préstamo ha vuelto a estado "Pendiente" para el deudor.
 - **Flujo de Cierre (v104)**: Se unificó la salida al Dashboard tras cualquier acción definitiva (Confirmar revisión, Cancelar o Liquidar/Pagar) desde la vista de gestión individual, asegurando que el usuario regrese a la pantalla principal para ver los cambios.
 - **Flujo de Navegación (v103)**: Tras confirmar o cancelar una revisión desde la pantalla de gestión, la aplicación redirige automáticamente al Dashboard para mostrar el estado actualizado como "Pendiente" o cerrar el ciclo.

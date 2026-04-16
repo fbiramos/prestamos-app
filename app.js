@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v105 Iniciando...");
+    console.log("🚀 RZBRO$ v106 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -461,7 +461,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p class="text-sm text-red-400 uppercase font-bold mb-2 tracking-widest">POR ${whoRejected.toUpperCase()}</p>
                         <p class="text-5xl font-black text-white">$ ${new Intl.NumberFormat('es-MX').format(parseFloat(loan.amount))}</p>
                     </div>
-                    <button onclick="viewBrotherDetail('${whoRejected.split(',')[0]}')" class="bg-red-600 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase shadow-lg shadow-red-900/40 active:scale-95 transition-all">Revisar</button>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="viewBrotherDetail('${whoRejected.split(',')[0]}')" class="bg-red-600 text-white px-6 py-4 rounded-2xl text-xs font-black uppercase shadow-lg shadow-red-900/40 active:scale-95 transition-all">Revisar</button>
+                        <button onclick="deleteLoan('${loan.id}')" class="text-red-400 text-[10px] font-black uppercase underline decoration-2 underline-offset-4">Descartar</button>
+                    </div>
                 `;
                 rejectSection.appendChild(card);
             });
@@ -834,7 +837,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v105 para:", currentUser);
+        console.log("📡 Conectando Firestore v106 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -842,7 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v105.");
+                    console.log("✅ Datos sincronizados v106.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
