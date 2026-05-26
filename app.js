@@ -7,7 +7,7 @@ const BROTHERS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v106 Iniciando...");
+    console.log("🚀 RZBRO$ v107 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 
@@ -842,7 +842,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("No se puede iniciar el listener: No hay usuario definido.");
             return;
         }
-        console.log("📡 Conectando Firestore v106 para:", currentUser);
+        console.log("📡 Conectando Firestore v107 para:", currentUser);
         
         if (unsubscribe) unsubscribe();
         
@@ -850,7 +850,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unsubscribe = db.collection('loans')
             .onSnapshot(
                 snapshot => {
-                    console.log("✅ Datos sincronizados v106.");
+                    console.log("✅ Datos sincronizados v107.");
                     globalData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
                     renderLoans(globalData);
