@@ -131,6 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Utilidad centralizada para formato de moneda
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+    };
+
     pinInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') window.submitPin();
     });
