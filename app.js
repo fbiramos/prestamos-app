@@ -1,13 +1,13 @@
 // Lista de hermanos autorizados
 const BROTHERS = {
     'Fabio': {},
-    'Juan Carlos': {},
+    'Juanca': {},
     'Ronald': {},
     'Luis': {}
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 RZBRO$ v107 Iniciando...");
+    console.log("🚀 RZBRO$ v108 Iniciando...");
     let currentUser = localStorage.getItem('rzbros_user') || null;
     const firebaseConfig = {
         apiKey: "AIzaSyCg8HhgWAwiDQHaU53GS9H99Kw6S2-rSgQ", 

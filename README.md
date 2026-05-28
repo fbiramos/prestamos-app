@@ -71,7 +71,7 @@ Para desplegar cambios y que se reflejen en todos los dispositivos:
 ##  Usuarios Autorizados
 El acceso está configurado para:
 1. **Fabio**
-2. **Juan Carlos**
+2. **Juanca**
 3. **Ronald**
 4. **Luis**
 
